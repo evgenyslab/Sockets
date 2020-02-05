@@ -204,6 +204,8 @@ private:
                         maxfd = (maxfd>client ? maxfd : client);
                         pthread_mutex_lock(&mutex_cout);
                         std::cout << "new client " << client << std::endl;
+                        // TODO: add client thread for reading (which writes to common queue) and client thread for
+                        // writing...
                         char headers[4096] = "\0";
                         int readBytes = _read(client, headers);
                         // TODO Verify handshake, create pthread for this client...

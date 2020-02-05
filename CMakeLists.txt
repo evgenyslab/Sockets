@@ -8,3 +8,9 @@ include_directories(
 
 add_executable(test src/test.cpp include/server.h include/common_header.h include/client.h)
 target_link_libraries(test pthread)
+
+add_executable(client src/client.cpp include/server.h include/common_header.h include/client.h)
+target_link_libraries(client pthread)
+
+add_executable(server src/server.cpp include/server.h include/common_header.h include/client.h)
+target_link_libraries(server pthread)

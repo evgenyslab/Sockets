@@ -19,6 +19,7 @@
 #include <thread>
 #include <random>
 #include <map>
+#include <deque>
 
 #define PORT        unsigned short
 #define SOCKET    int
