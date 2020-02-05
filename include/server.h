@@ -1,5 +1,17 @@
 #include "common_header.h"
 
+
+/*
+ * client:
+ *
+ * client.init(socket)
+ *  -> create send thread that waits idly until called? (this doesnt make sense)
+ *     if write is unresponsive, need to communicate back to server to remove this client...
+ *  -> create recv thread that builds msg and puts into server's incoming msg queue (using locks)
+ *
+ * clients.pushback(client) // how to remove later?
+ * */
+
 class server{
     SOCKET sock;
     fd_set master;
@@ -58,8 +70,6 @@ class server{
 
 
 public:
-
-    std::vector<char> mymsg;
 
     explicit server(int port = 0)
             : sock(INVALID_SOCKET_m)

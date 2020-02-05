@@ -47,6 +47,23 @@ void randomString(char *buf, int l){
     }
 }
 
+std::string randomString(std::size_t length)
+{
+    std::random_device random_device;
+    std::mt19937 generator(random_device());
+    std::uniform_int_distribution<int> distribution(48,125);
+
+    std::string random_string;
+
+    for (std::size_t i = 0; i < length; ++i)
+    {
+        random_string += (char) distribution(generator);
+
+    }
+
+    return random_string;
+}
+
 std::vector<unsigned char> vencode(unsigned int paramInt)
 {
     std::vector<unsigned char> arrayOfByte(4);
