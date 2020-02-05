@@ -85,15 +85,12 @@ private:
             }
 
         }
-
-
-        // might want to add handling here to go back to 'connect'
         printf("Server Disconnected\n");
         return nullptr;
     }
 
-    void _connect(){
 
+    void _connect(){
         printf("Client Attempting to connect on port: %d\n", port);
         while(!connected){
             // this should be in a loop until connection is established...
