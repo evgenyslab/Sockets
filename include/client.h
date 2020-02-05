@@ -13,7 +13,7 @@ private:
     std::deque<std::string> mqueue;
     pthread_mutex_t mutexQueue = PTHREAD_MUTEX_INITIALIZER;
 
-    pthread_t recvt, opth;
+    pthread_t thread_operator;
     struct sockaddr_in server_sock;
 
     // Generic Write to client
@@ -163,8 +163,7 @@ public:
 
     ~client(){
         // todo: disconnect any open socket...
-        pthread_join(recvt,NULL);
-        pthread_join(opth,NULL);
+        pthread_join(thread_operator,NULL);
         close(sock);
         std::cout << "Client cleaned and closed\n";
     };
@@ -194,7 +193,7 @@ public:
 
     void start(){
         // create op thread...
-        pthread_create(&opth,NULL,_op,this);
+        pthread_create(&thread_operator,NULL,_op,this);
     }
 
 

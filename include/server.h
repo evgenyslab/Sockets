@@ -17,7 +17,7 @@ class server{
     fd_set master;
     int timeout;
     std::vector<int> clients;
-    pthread_t thread_listen;
+    pthread_t thread_listen, thread_manage;
     pthread_mutex_t mutex_client = PTHREAD_MUTEX_INITIALIZER;
     pthread_mutex_t mutex_cout = PTHREAD_MUTEX_INITIALIZER;
     pthread_mutex_t mutex_writer = PTHREAD_MUTEX_INITIALIZER;
@@ -58,6 +58,14 @@ class server{
         return result;
     }
 
+    void Manager(){
+        // This function manages clients that are created by listener.
+        // it starts and kills clients based on their responsiveness.
+        while(1){
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+        }
+    }
+
     /* Help create a thread from a class member function through
      * a static class function
      *
@@ -65,6 +73,12 @@ class server{
     static void* listen_Helper(void* context)
     {
         ((server *)context)->Listener();
+        return nullptr;
+    }
+
+    static void* client_manager(void* context)
+    {
+        ((server *)context)->Manager();
         return nullptr;
     }
 
@@ -131,10 +145,12 @@ public:
         pthread_mutex_lock(&mutex_writer);
         // createa a thread that listens for incoming connections:
         pthread_create(&thread_listen, nullptr, this->listen_Helper, this);
+        pthread_create(&thread_manage, nullptr, this->client_manager, this);
     }
 
     void stop(){
         pthread_join(thread_listen, nullptr);
+        pthread_join(thread_manage, nullptr);
         this->release();
     }
 
