@@ -1,5 +1,6 @@
 #include "common_header.h"
 
+#define MAX_QUEUE_SIZE 10
 
 /*
  * client:
@@ -12,12 +13,22 @@
  * clients.pushback(client) // how to remove later?
  * */
 
+struct _clientContext{
+    int sock = -1;
+    std::deque<message> *_mref = nullptr; // <- ref to server's message queue
+    pthread_mutex_t * _mutexQueue = nullptr;
+    _clientContext(int _s, std::deque<message>* _q, pthread_mutex_t* _m): sock(_s), _mref(_q), _mutexQueue(_m){};
+};
+
 class server{
     SOCKET sock;
     fd_set master;
     int timeout;
     std::vector<int> clients;
     pthread_t thread_listen, thread_manage;
+    std::vector<pthread_t> client_receiver;
+    std::deque<message> messageQueue;
+    pthread_mutex_t mutex_q_msg = PTHREAD_MUTEX_INITIALIZER;
     pthread_mutex_t mutex_client = PTHREAD_MUTEX_INITIALIZER;
     pthread_mutex_t mutex_cout = PTHREAD_MUTEX_INITIALIZER;
     pthread_mutex_t mutex_writer = PTHREAD_MUTEX_INITIALIZER;
@@ -56,6 +67,52 @@ class server{
         std::string s = buffer;
         buffer = (char*) s.substr(0, (int) result).c_str();
         return result;
+    }
+
+    static void * _client_reader(void *context){
+        // context needs to have access to server's message queue, message queue mutex,
+        // client socket
+        // cast into something familiar:
+        auto *ctx = (_clientContext*) context;
+
+        int their_sock = ctx->sock;
+        char *msg = new char[BYTES_TO_READ];
+        int len;
+        unsigned int mlen;
+
+        long bytes_to_read = 0;
+
+        std::vector<char> vmsg;
+
+        while((len = recv(their_sock,msg, BYTES_TO_READ,0)) > 0) {
+            // push msg into char vector
+            vmsg.insert(vmsg.end(), msg, msg+len);
+            // if bytes_to_read == 0 && vmsg.size() > 3, pop out first 4 bytes, and decode message length
+            if (bytes_to_read==0 & vmsg.size()>3){
+                char * buf = new char[4];
+                std::copy(vmsg.begin(), vmsg.begin()+4, buf);
+                decode(reinterpret_cast<unsigned char *>(buf), mlen);
+                bytes_to_read = static_cast<long>(mlen);
+                vmsg.erase(vmsg.begin(), vmsg.begin()+4);
+            }
+            // expecting message, theres enough in buffer
+            if (bytes_to_read>0 & vmsg.size() >= bytes_to_read){
+                // put message into workable queue:
+                message m = {getNow(), std::string(vmsg.begin(),vmsg.begin()+bytes_to_read)};
+                pthread_mutex_lock(ctx->_mutexQueue);
+                // cleanup message queue:
+                if (ctx->_mref->size()>= MAX_QUEUE_SIZE)
+                    ctx->_mref->pop_front();
+                ctx->_mref->emplace_back(m);
+                pthread_mutex_unlock(ctx->_mutexQueue);
+                // erase message bytes from char array:
+                vmsg.erase(vmsg.begin(), vmsg.begin()+bytes_to_read);
+                // reset:
+                bytes_to_read = 0;
+            }
+        }
+        return nullptr;
+
     }
 
     void Manager(){
@@ -237,6 +294,15 @@ private:
                         // TODO Verify handshake, create pthread for this client...
                         std::cout << headers;
                         pthread_mutex_unlock(&mutex_cout);
+
+                        // create context object for client receiver thread:
+                        _clientContext ctx = {client, &messageQueue, &mutex_q_msg};
+                        auto * _ctx = &ctx;
+                        // create client receiver thread:
+                        client_receiver.emplace_back(pthread_t());
+                        pthread_create(&client_receiver[client_receiver.size()-1], nullptr, _client_reader, (void*) _ctx);
+
+
                         pthread_mutex_lock(&mutex_client);
                         _write(client, header, sizeof(header));
                         clients.push_back(client);

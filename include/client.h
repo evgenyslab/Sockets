@@ -2,6 +2,15 @@
 
 #define MAX_QUEUE_SIZE 10
 
+template<class T>
+struct recvConfig{
+    int sock;
+    T *q;
+    recvConfig():sock(-1),q(nullptr){};
+    recvConfig(int _sock):sock(_sock), q(nullptr){};
+    recvConfig(int _sock, T * _q):sock(_sock),q(_q){};
+};
+
 class client{
 private:
 
@@ -12,6 +21,7 @@ private:
     char ip[INET_ADDRSTRLEN];
     char *ID = new char[ID_LENGTH];
     std::deque<message> mqueue = {};
+    recvConfig<std::deque<message>> _receiver = {0,&mqueue};
     pthread_mutex_t mutexQueue = PTHREAD_MUTEX_INITIALIZER;
 
     pthread_t thread_operator;
