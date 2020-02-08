@@ -1,5 +1,6 @@
 #include "common_header.h"
 
+#define MAX_QUEUE_SIZE 10
 
 class client{
 private:
@@ -10,7 +11,7 @@ private:
     int sock;
     char ip[INET_ADDRSTRLEN];
     char *ID = new char[ID_LENGTH];
-    std::deque<std::string> mqueue;
+    std::deque<message> mqueue = {};
     pthread_mutex_t mutexQueue = PTHREAD_MUTEX_INITIALIZER;
 
     pthread_t thread_operator;
@@ -35,7 +36,7 @@ private:
     }
 
 
-    static void *_recv(void *lsock){
+    void *_recv(void *lsock){
 
         int their_sock = *((int *)lsock);
         char *msg = new char[BYTES_TO_READ];
@@ -45,7 +46,6 @@ private:
         long bytes_to_read = 0;
 
         std::vector<char> vmsg;
-        std::vector<message> tmq;
 
         while((len = recv(their_sock,msg, BYTES_TO_READ,0)) > 0) {
             // push msg into char vector
@@ -62,28 +62,17 @@ private:
             if (bytes_to_read>0 & vmsg.size() >= bytes_to_read){
                 // put message into workable queue:
                 message m = {getNow(), std::string(vmsg.begin(),vmsg.begin()+bytes_to_read)};
-                tmq.emplace_back(m);;
+                pthread_mutex_lock(&mutexQueue);
+                // cleanup message queue:
+                if (mqueue.size()>= MAX_QUEUE_SIZE)
+                    mqueue.pop_front();
+                mqueue.emplace_back(m);
+                pthread_mutex_unlock(&mutexQueue);
                 // erase message bytes from char array:
                 vmsg.erase(vmsg.begin(), vmsg.begin()+bytes_to_read);
                 // reset:
                 bytes_to_read = 0;
             }
-            // TODO: Remove this later..
-            while(tmq.size()>0){
-                auto tstr = atol(tmq[0].msg.substr(0,19).c_str());
-                auto tstrB = atol(tmq[0].msg.substr(20,20+19).c_str());
-                long dt = tmq[0]._time - tstr;
-                long dtB = tmq[0]._time - tstrB;
-                printf("New Message Received!\nOrigin time:\t %ld ns\nSend time:\t\t %ld ns\nReceive time:\t %ld ns\n"
-                       "TOF(socket):\t\t %f us\nTOF(source):\t\t %f us\nMessage Length:\t %ld\n", tstr, tstrB, tmq[0]._time,
-                       dt/1e3, dtB/1e3, tmq[0].msg.size());
-                if (tmq[0].msg.size() < 100)
-                    printf("Message: %s\n", tmq[0].msg.c_str());
-                else
-                    printf("Message: <TOO LONG>\n");
-                tmq.erase(tmq.begin());
-            }
-
         }
         printf("Server Disconnected\n");
         return nullptr;
@@ -185,6 +174,7 @@ public:
             std::string smsg = m + msg;
             if(_write(const_cast<char *>(smsg.data()), smsg.size()) != smsg.size()){
                 // something went wrong!
+                // server maybe disconnected? - this would be captured by the listen...
             }
     }
 
