@@ -74,7 +74,9 @@ void send(std::string msg, void *ptr){
     while(!context->connected){
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
-    context->hptr[0]->send(msg.c_str());
+    // create JSON string:
+    std::string jmsg = "{\"message\": \"" + msg + "\"}";
+    context->hptr[0]->send(jmsg.c_str());
 }
 
 int main() {

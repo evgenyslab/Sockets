@@ -16,9 +16,11 @@
     };
 
     ws.onmessage = function(event){
-        console.log("I got  amessage");
-        console.log(event.data);
-        document.getElementById("content").innerHTML = event.data;
+        var msg = JSON.parse(event.data);
+        console.log(msg.message)
+        // console.log("I got  amessage");
+        // console.log(event.data);
+        document.getElementById("content").innerHTML = msg.message;
     };
 
 
