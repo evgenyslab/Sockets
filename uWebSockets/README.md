@@ -15,7 +15,6 @@ cd uWebSockets
 git checkout v0.14
 make -j 8
 sudo make install
-
 ```
 
 
@@ -23,5 +22,9 @@ sudo make install
 
 ```bash
 brew install openssl zlib libuv
-
+git clone https://github.com/uNetworking/uWebSockets.git
+cd uWebSockets
+git checkout v0.14
+make -j 8
+sudo make install
 ```
