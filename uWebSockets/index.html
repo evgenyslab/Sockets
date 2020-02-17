@@ -3,6 +3,7 @@
 <body>
 <p>Hello world</p>
 <p><img src="http://localhost:7777"></img></p>
+<div id="content"></div>
 </body>
 </html>
 
@@ -15,7 +16,9 @@
     };
 
     ws.onmessage = function(event){
-        console.log("I got  amessage")
+        console.log("I got  amessage");
+        console.log(event.data);
+        document.getElementById("content").innerHTML = event.data;
     };
 
 
