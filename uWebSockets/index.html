@@ -1,0 +1,22 @@
+<html>
+<header><title>This is title</title></header>
+<body>
+<p>Hello world</p>
+<p><img src="http://localhost:7777"></img></p>
+</body>
+</html>
+
+<script>
+
+    var ws = new WebSocket("ws://127.0.0.1:13049");
+
+    ws.onopen = function(event) {
+        console.log("Connected");
+    };
+
+    ws.onmessage = function(event){
+        console.log("I got  amessage")
+    };
+
+
+</script>
