@@ -3,7 +3,8 @@
 <body>
 <p>Hello world</p>
 <p><img src="http://localhost:7777"></img></p>
-<div id="content"></div>
+<div id="content">Message Received: </div>
+<div id="epoch">Server time: </div>
 </body>
 </html>
 
@@ -20,7 +21,13 @@
         console.log(msg.message)
         // console.log("I got  amessage");
         // console.log(event.data);
-        document.getElementById("content").innerHTML = msg.message;
+        if (msg["message"] !== undefined){
+            document.getElementById("content").innerHTML = "message Received: " + msg.message;
+        }
+        if (msg["epoch"] !== undefined){
+            document.getElementById("epoch").innerHTML = "Server time: " + msg.epoch;
+        }
+
     };
 
 

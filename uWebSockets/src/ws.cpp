@@ -5,6 +5,10 @@
 
 using namespace uWS;
 
+uint64_t now(){
+    return (std::chrono::duration_cast<std::chrono::nanoseconds >(std::chrono::system_clock::now().time_since_epoch())).count();
+}
+
 typedef uWS::WebSocket<uWS::SERVER>* uServer;
 
 struct ct{
@@ -86,6 +90,27 @@ void * webserver(void *ptr){
     pthread_exit(nullptr);
 }
 
+void *send_heartbeat(void *ptr){
+    auto *context = (ct*) ptr;
+    while(1){
+        if(context->connected){
+            auto t = now();
+            char tt[19];
+            sprintf(tt, "%ld",t);
+            // create JSON string:
+            std::string jmsg = "{\"epoch\": \"" + std::string(tt) + "\"}";
+            // send to all clients:
+            for(auto cptr: context->hptr)
+                cptr->send(jmsg.c_str());
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
+    }
+
+    pthread_exit(nullptr);
+
+}
+
 void send(std::string msg, void *ptr){
     auto *context = (ct*) ptr;
     if(!context->connected){
@@ -109,6 +134,9 @@ int main() {
     pthread_t ws;
     pthread_create(&ws, nullptr, webserver, &localContext);
 
+    pthread_t clock;
+    pthread_create(&clock, nullptr, send_heartbeat, &localContext);
+
     std::string cmd;
     bool exit = false;
     // wait for a moment while uwebsockets starts...
@@ -126,6 +154,7 @@ int main() {
     }
 
     pthread_join(ws, nullptr);
+    pthread_join(clock, nullptr);
 
 
 }
