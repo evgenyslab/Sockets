@@ -1,7 +1,11 @@
 <html>
 <header><title>This is title</title></header>
 <body>
-<p>Hello world</p>
+<div id="hero"><<p>Hello world</p></div>
+<div id="button_panel">
+    <button type="button" id="myBtn" onclick="myFunction()">Try it</button>
+</div>
+
 <p><img src="http://localhost:7777"></img></p>
 <div id="content">Message Received: </div>
 <div id="epoch">Server time: </div>
@@ -29,6 +33,11 @@
         }
 
     };
+
+    function myFunction(){
+        console.log("button clicked")
+        ws.send("the button was clicked\n");
+    }
 
 
 </script>

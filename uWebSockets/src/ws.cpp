@@ -77,6 +77,13 @@ void * webserver(void *ptr){
         }
     });
 
+    localContext->h->onMessage([](uServer ws, char *message, size_t length, uWS::OpCode opCode){
+        // could match ws to client list if we really wanted to...
+        // could push message into local context work queue.
+        std::string rmsg(message, length);
+        printf("\nMessage Received: <%s>\n", rmsg.c_str());
+    });
+
 
 
     if (localContext->h->listen("0.0.0.0",13049)) {
@@ -103,7 +110,7 @@ void *send_heartbeat(void *ptr){
             for(auto cptr: context->hptr)
                 cptr->send(jmsg.c_str());
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
     }
 
