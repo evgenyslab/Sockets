@@ -1,14 +1,17 @@
 #include <uWS/uWS.h>
 #include <iostream>
+#include <algorithm>
 #include <thread>
 
 using namespace uWS;
 
+typedef uWS::WebSocket<uWS::SERVER>* uServer;
 
 struct ct{
     uWS::Hub *h= nullptr;
-    std::vector<uWS::WebSocket<uWS::SERVER>*> hptr = {};
+    std::vector<uServer> hptr = {};
     bool connected = false;
+    pthread_mutex_t _lock = PTHREAD_MUTEX_INITIALIZER;
 };
 
 void * fun(void *ptr){
@@ -25,23 +28,37 @@ void * webserver(void *ptr){
 
 
     ct * localContext = (ct*) ptr;
-
-    localContext->h->onConnection([localContext](uWS::WebSocket<uWS::SERVER> *ws, uWS::HttpRequest req) {
+    // does this mean the hub is a server or a client?
+    localContext->h->onConnection([localContext](uServer ws, uWS::HttpRequest req) {
         std::cout << "A client connected" << std::endl;
         // seems like theres a new pointer per connected client; need to manage this better.
+        pthread_mutex_lock(&localContext->_lock);
         localContext->hptr.emplace_back(ws);
         localContext->connected = true;
+        pthread_mutex_unlock(&localContext->_lock);
     }
     );
 
     // TOOD: implement this to handle clients correctly...
-//    localContext->h->onDisconnection([localContext](uWS::WebSocket<uWS::SERVER> *ws) {
-//         std::cout << "A client connected" << std::endl;
-//         // seems like theres a new pointer per connected client; need to manage this better.
-//         localContext->hptr.emplace_back(ws);
-//         localContext->connected = true;
-//     }
-//     );
+    localContext->h->onDisconnection([localContext](uServer ws, int code, char *message, size_t length) {
+        std::cout << "CLIENT CLOSE: " << code << std::endl;
+        std::vector<uServer>::iterator it;
+        it = find (localContext->hptr.begin(), localContext->hptr.end(), ws);
+        if (it != localContext->hptr.end()){
+
+            pthread_mutex_lock(&localContext->_lock);
+            localContext->hptr.erase(it);
+            // set connection state based on how many connected clients there are:
+            localContext->connected = localContext->hptr.size() > 0;
+            pthread_mutex_unlock(&localContext->_lock);
+            printf("Client removed!\n");
+            if (localContext->hptr.size()==0){
+                printf("All Clients disconnected!\n");
+            }
+        }else{
+            printf("client NOT found in array\n");
+        }
+    });
 
     localContext->h->onHttpRequest([](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t, size_t) {
         const std::string s = "<h1>Hello world!</h1>";
@@ -71,12 +88,15 @@ void * webserver(void *ptr){
 
 void send(std::string msg, void *ptr){
     auto *context = (ct*) ptr;
-    while(!context->connected){
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    if(!context->connected){
+        printf("No Clients connected, skipping send!\n");
+        return;
     }
     // create JSON string:
     std::string jmsg = "{\"message\": \"" + msg + "\"}";
-    context->hptr[0]->send(jmsg.c_str());
+    // send to all clients:
+    for(auto cptr: context->hptr)
+        cptr->send(jmsg.c_str());
 }
 
 int main() {
