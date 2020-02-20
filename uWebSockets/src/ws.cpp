@@ -103,7 +103,7 @@ void *send_heartbeat(void *ptr){
             for(auto cptr: context->hptr)
                 cptr->send(jmsg.c_str());
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
     }
 
@@ -128,16 +128,22 @@ int main() {
 
     // instantiate object...
     ct localContext;
+    // create local uWS hub object:
     uWS::Hub h;
+    // attach hub to local context object:
     localContext.h = &h;
     // create websever thread
     pthread_t ws;
+    // run webserver thread (handles client connections/disconnections):
     pthread_create(&ws, nullptr, webserver, &localContext);
-
+    // create clock thread (sends clock info to client):
     pthread_t clock;
+    // run the clock thread:
     pthread_create(&clock, nullptr, send_heartbeat, &localContext);
 
+    // dummy string for grabbing keyboard input:
     std::string cmd;
+    // initialize exit condition:
     bool exit = false;
     // wait for a moment while uwebsockets starts...
     std::this_thread::sleep_for(std::chrono::seconds(2));
@@ -146,15 +152,12 @@ int main() {
         std::getline (std::cin,cmd);
         if (cmd == "exit"){
             exit = true;
+            pthread_kill(ws, 0);
+            pthread_kill(clock,0);
             continue;
         }else{
             // send message to connected client (browser)
             send(cmd, &localContext);
         }
     }
-
-    pthread_join(ws, nullptr);
-    pthread_join(clock, nullptr);
-
-
 }
