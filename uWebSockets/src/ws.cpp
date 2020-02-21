@@ -115,6 +115,7 @@ void * webserver(void *ptr){
         // could match ws to client list if we really wanted to...
         // could push message into local context work queue.
         std::string rmsg(message, length);
+        // KNOWN ISSUE OF HANDLING '\n' in MESSAGE!
         printf("\nMessage Received: <%s>\n", rmsg.c_str());
         send(rmsg, localContext);
     });
