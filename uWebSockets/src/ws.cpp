@@ -28,6 +28,40 @@ void * fun(void *ptr){
     pthread_exit(nullptr);
 }
 
+void *send_heartbeat(void *ptr){
+    auto *context = (ct*) ptr;
+    while(1){
+        if(context->connected){
+            auto t = now();
+            char tt[19];
+            sprintf(tt, "%ld",t);
+            // create JSON string:
+            std::string jmsg = "{\"epoch\": \"" + std::string(tt) + "\"}";
+            // send to all clients:
+            for(auto cptr: context->hptr)
+                cptr->send(jmsg.c_str());
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+
+    }
+
+    pthread_exit(nullptr);
+
+}
+
+void send(const std::string msg, void *ptr){
+    auto *context = (ct*) ptr;
+    if(!context->connected){
+        printf("No Clients connected, skipping send!\n");
+        return;
+    }
+    // create JSON string:
+    std::string jmsg = "{\"message\": \"" + msg + "\"}";
+    // send to all clients:
+    for(auto cptr: context->hptr)
+        cptr->send(jmsg.c_str());
+}
+
 void * webserver(void *ptr){
 
 
@@ -77,11 +111,12 @@ void * webserver(void *ptr){
         }
     });
 
-    localContext->h->onMessage([](uServer ws, char *message, size_t length, uWS::OpCode opCode){
+    localContext->h->onMessage([localContext](uServer ws, char *message, size_t length, uWS::OpCode opCode){
         // could match ws to client list if we really wanted to...
         // could push message into local context work queue.
         std::string rmsg(message, length);
         printf("\nMessage Received: <%s>\n", rmsg.c_str());
+        send(rmsg, localContext);
     });
 
 
@@ -97,39 +132,7 @@ void * webserver(void *ptr){
     pthread_exit(nullptr);
 }
 
-void *send_heartbeat(void *ptr){
-    auto *context = (ct*) ptr;
-    while(1){
-        if(context->connected){
-            auto t = now();
-            char tt[19];
-            sprintf(tt, "%ld",t);
-            // create JSON string:
-            std::string jmsg = "{\"epoch\": \"" + std::string(tt) + "\"}";
-            // send to all clients:
-            for(auto cptr: context->hptr)
-                cptr->send(jmsg.c_str());
-        }
-        std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
-    }
-
-    pthread_exit(nullptr);
-
-}
-
-void send(std::string msg, void *ptr){
-    auto *context = (ct*) ptr;
-    if(!context->connected){
-        printf("No Clients connected, skipping send!\n");
-        return;
-    }
-    // create JSON string:
-    std::string jmsg = "{\"message\": \"" + msg + "\"}";
-    // send to all clients:
-    for(auto cptr: context->hptr)
-        cptr->send(jmsg.c_str());
-}
 
 int main() {
 

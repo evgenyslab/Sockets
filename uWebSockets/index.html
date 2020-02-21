@@ -3,6 +3,8 @@
 <body>
 <div id="hero"><<p>Hello world</p></div>
 <div id="button_panel">
+    <input id="myInput" value="Type your input here..">
+<!--    <button id="myBtn" onclick="javascript:alert('Hello World!')">Button</button>-->
     <button type="button" id="myBtn" onclick="myFunction()">Try it</button>
 </div>
 
@@ -15,9 +17,15 @@
 <script>
 
     var ws = new WebSocket("ws://127.0.0.1:13049");
+    var connected = false;
 
     ws.onopen = function(event) {
         console.log("Connected");
+        connected = true;
+    };
+
+    ws.onclose = function(event){
+      connected = false;
     };
 
     ws.onmessage = function(event){
@@ -35,9 +43,25 @@
     };
 
     function myFunction(){
-        console.log("button clicked")
-        ws.send("the button was clicked\n");
+        console.log("button clicked");
+        if (connected){
+            ws.send("the button was clicked\n");
+        }
     }
+
+    var input = document.getElementById("myInput");
+    input.addEventListener("keyup", function(event) {
+        if (event.keyCode === 13) {
+            event.preventDefault();
+            // do something with data
+            console.log(input.value);
+            if (connected){
+                ws.send(input.value);
+            }
+            input.value = "";
+            // document.getElementById("myBtn").click();
+        }
+    });
 
 
 </script>
