@@ -1,16 +1,28 @@
 <html>
 <header><title>This is title</title></header>
 <body>
-<div id="hero"><<p>Hello world</p></div>
+<div id="hero"><p>Hello world</p></div>
+<div id="websocketConnect">
+    <input id="websocketConnectPort" value="enter socket port">
+    <!--    <button id="myBtn" onclick="javascript:alert('Hello World!')">Button</button>-->
+    <button type="button" id="socketConnect" onclick="connectToSocket()">Connect</button>
+</div>
 <div id="button_panel">
     <input id="myInput" value="Type your input here..">
 <!--    <button id="myBtn" onclick="javascript:alert('Hello World!')">Button</button>-->
     <button type="button" id="myBtn" onclick="myFunction()">Try it</button>
 </div>
+<div>
+    <img id="ItemPreview" src="">
+</div>
 
 <p><img src="http://localhost:7777"></img></p>
 <div id="content">Message Received: </div>
 <div id="epoch">Server time: </div>
+
+
+<img id="image"/>
+<div id="imageBytes"></div>
 </body>
 </html>
 
@@ -29,18 +41,39 @@
     };
 
     ws.onmessage = function(event){
-        var msg = JSON.parse(event.data);
-        console.log(msg.message)
-        // console.log("I got  amessage");
-        // console.log(event.data);
-        if (msg["message"] !== undefined){
-            document.getElementById("content").innerHTML = "message Received: " + msg.message;
-        }
-        if (msg["epoch"] !== undefined){
-            document.getElementById("epoch").innerHTML = "Server time: " + msg.epoch;
+        // if a byte stream is received...
+        if (typeof(event.data)=="object"){
+            // byte stream, this seems to work with read jpgs without any other processing
+            // why does this work?
+            // ONLY WORKS WITH JPEG ENCODED IMAGES!
+            // this should work with JPEGS
+            // Maybe need to use this:
+                    // Make a Blob from the bytes
+                    // var blob = new Blob([bytes], {type: 'image/bmp'});
+                    //
+                    // // Use createObjectURL to make a URL for the blob
+                    // var image = new Image();
+                    // image.src = URL.createObjectURL(blob);
+            // might be able to use msgpack for this too and encode on c++ side, decode here...
+            var data = event.data;
+            // var blob = new Blob(event.data.arrayBuffer(), {type: "image/png"});
+            var imageUrl = URL.createObjectURL(data);
+            document.querySelector("#image").src = imageUrl;
+        }else{
+            // string msg is received, might as well be a json dict....
+            var msg = JSON.parse(event.data);
+            if (msg["message"] !== undefined){
+                console.log(msg.message);
+                document.getElementById("content").innerHTML = "message Received: " + msg.message;
+            }
+            if (msg["epoch"] !== undefined){
+                document.getElementById("epoch").innerHTML = "Server time: " + msg.epoch;
+            }
         }
 
+
     };
+
 
     function myFunction(){
         console.log("button clicked");
@@ -49,6 +82,7 @@
         }
     }
 
+    // communication textbox
     var input = document.getElementById("myInput");
     input.addEventListener("keyup", function(event) {
         if (event.keyCode === 13) {

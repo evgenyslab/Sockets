@@ -2,6 +2,7 @@
 #include <iostream>
 #include <algorithm>
 #include <thread>
+#include <fstream>
 
 using namespace uWS;
 
@@ -17,6 +18,33 @@ struct ct{
     bool connected = false;
     pthread_mutex_t _lock = PTHREAD_MUTEX_INITIALIZER;
 };
+
+std::vector<char> readFile(const char* filename)
+{
+    // open the file:
+    std::ifstream file(filename, std::ios::binary);
+
+    // Stop eating new lines in binary mode!!!
+    file.unsetf(std::ios::skipws);
+
+    // get its size:
+    std::streampos fileSize;
+
+    file.seekg(0, std::ios::end);
+    fileSize = file.tellg();
+    file.seekg(0, std::ios::beg);
+
+    // reserve capacity
+    std::vector<char> vec;
+    vec.reserve(fileSize);
+
+    // read the data:
+    vec.insert(vec.begin(),
+               std::istream_iterator<char>(file),
+               std::istream_iterator<char>());
+
+    return vec;
+}
 
 void * fun(void *ptr){
     auto *context = (ct*) ptr;
@@ -60,6 +88,19 @@ void send(const std::string msg, void *ptr){
     // send to all clients:
     for(auto cptr: context->hptr)
         cptr->send(jmsg.c_str());
+}
+
+void sendImage(const std::string &msg, void *ptr){
+    auto *context = (ct*) ptr;
+    if(!context->connected){
+        printf("No Clients connected, skipping send!\n");
+        return;
+    }
+    // send to all clients:
+    for(auto cptr: context->hptr)
+        // sending as binary fixes UTF-8 encoding/decoding problem..
+        // this needs to be sent as binary, it will be received as a BLOB on the brower's side
+        cptr->send(msg.c_str(), msg.size(),OpCode::BINARY);
 }
 
 void * webserver(void *ptr){
@@ -124,11 +165,7 @@ void * webserver(void *ptr){
 
     if (localContext->h->listen("0.0.0.0",13049)) {
         std::cout << "Listening on port 13049" << std::endl;
-        // create op thread...
-        pthread_t tid;
-        pthread_create(&tid, nullptr, fun, localContext);
         localContext->h->run();
-        pthread_join(tid, nullptr);
     }
     pthread_exit(nullptr);
 }
@@ -158,6 +195,7 @@ int main() {
     bool exit = false;
     // wait for a moment while uwebsockets starts...
     std::this_thread::sleep_for(std::chrono::seconds(2));
+    std::vector<char> f;
     while(!exit){
         printf(">> ");
         std::getline (std::cin,cmd);
@@ -166,9 +204,13 @@ int main() {
             pthread_kill(ws, 0);
             pthread_kill(clock,0);
             continue;
+        }else if (cmd =="load") {
+            f = readFile("/Users/en/Git/Sockets/uWebSockets/test.jpeg");
+            std::string immsg(f.begin(), f.end());
+            sendImage(immsg, &localContext);
         }else{
-            // send message to connected client (browser)
-            send(cmd, &localContext);
+                // send message to connected client (browser)
+                send(cmd, &localContext);
         }
     }
 }
