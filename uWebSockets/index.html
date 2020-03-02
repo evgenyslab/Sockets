@@ -2,6 +2,9 @@
 <header><title>This is title</title></header>
 <body>
 <div id="hero"><p>Hello world</p></div>
+<div id="buttons">
+    <button type="button" id="sendJSON" onclick="sendJSON()">SNED</button>
+</div>
 <div id="websocketConnect">
     <input id="websocketConnectPort" value="enter socket port">
     <!--    <button id="myBtn" onclick="javascript:alert('Hello World!')">Button</button>-->
@@ -30,6 +33,12 @@
 
     var ws = new WebSocket("ws://127.0.0.1:13049");
     var connected = false;
+    var myobj = {
+        field0: 20,
+        field2: "blah",
+        field3: 14.6,
+        field5: null,
+    };
 
     ws.onopen = function(event) {
         console.log("Connected");
@@ -74,6 +83,12 @@
 
     };
 
+    function sendJSON(){
+        if (connected){
+            var sstring = JSON.stringify(myobj);
+            ws.send(sstring);
+        }
+    }
 
     function myFunction(){
         console.log("button clicked");

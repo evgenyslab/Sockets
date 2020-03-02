@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <thread>
 #include <fstream>
+#include <nlohmann/json.hpp>
 
 using namespace uWS;
 
@@ -84,10 +85,11 @@ void send(const std::string msg, void *ptr){
         return;
     }
     // create JSON string:
+    nlohmann::json j = {"message", msg};
     std::string jmsg = "{\"message\": \"" + msg + "\"}";
     // send to all clients:
     for(auto cptr: context->hptr)
-        cptr->send(jmsg.c_str());
+        cptr->send(j.dump().c_str());
 }
 
 void sendImage(const std::string &msg, void *ptr){
@@ -156,9 +158,26 @@ void * webserver(void *ptr){
         // could match ws to client list if we really wanted to...
         // could push message into local context work queue.
         std::string rmsg(message, length);
+        nlohmann::json j;
+        bool jsondata = false;
+        try{
+            j = nlohmann::json::parse(rmsg);
+            jsondata = true;
+        }catch(const std::exception& e){
+            // could not parse JSON
+            jsondata = false;
+        }
         // KNOWN ISSUE OF HANDLING '\n' in MESSAGE!
-        printf("\nMessage Received: <%s>\n", rmsg.c_str());
-        send(rmsg, localContext);
+        if (jsondata){
+
+            printf("\nJSON Message Received:\n");
+            std::cout << j.dump(2) << std::endl;
+            send(j.dump(),localContext);
+        }else{
+            printf("\nMessage Received: <%s>\n", rmsg.c_str());
+            send(rmsg, localContext);
+        }
+
     });
 
 
