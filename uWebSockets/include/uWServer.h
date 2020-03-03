@@ -46,6 +46,7 @@ namespace uWServer{
         void stop();
 
         void send(const std::string msg);
+        void send(const nlohmann::json &jobj);
 
 
     private:

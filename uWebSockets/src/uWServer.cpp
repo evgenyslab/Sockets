@@ -29,6 +29,17 @@ namespace uWServer{
             cptr->send(j.dump().c_str());
     }
 
+    void uWServer::send(const nlohmann::json &jobj) {
+        if(!this->connected){
+            printf("No Clients connected, skipping send!\n");
+            return;
+        }
+
+        // send to all clients:
+        for(auto cptr: this->connections)
+            cptr->send(jobj.dump().c_str());
+    }
+
     void uWServer::_run(){
         // do actual work here...
         // does this mean the hub is a server or a client?
