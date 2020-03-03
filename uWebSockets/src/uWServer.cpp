@@ -29,6 +29,18 @@ namespace uWServer{
             cptr->send(j.dump().c_str());
     }
 
+    void uWServer::send(std::vector<char> *cArray) {
+        // send binary char array
+        if(!this->connected){
+            printf("No Clients connected, skipping send!\n");
+            return;
+        }
+        std::string msg(cArray->begin(), cArray->end());
+        // send to all clients:
+        for(auto cptr: this->connections)
+            cptr->send(msg.c_str(),msg.size(),OpCode::BINARY);
+    }
+
     void uWServer::send(const nlohmann::json &jobj) {
         if(!this->connected){
             printf("No Clients connected, skipping send!\n");
