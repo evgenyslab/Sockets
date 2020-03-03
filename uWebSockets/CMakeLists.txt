@@ -16,10 +16,13 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
     include_directories(/usr/local/opt/openssl/include)
     link_directories(/usr/local/opt/openssl/lib)
-    link_directories(/usr/local/Cellar/libuv/1*/lib)
+#    link_directories(/usr/local/Cellar/libuv/1*/lib)
 
 
 endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
 add_executable(ws src/ws.cpp)
 target_link_libraries(ws z ssl uv uWS pthread)
+
+add_executable(main src/source.cpp src/uWServer.cpp)
+target_link_libraries(main z ssl uv uWS pthread)
