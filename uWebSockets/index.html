@@ -70,13 +70,19 @@
             document.querySelector("#image").src = imageUrl;
         }else{
             // string msg is received, might as well be a json dict....
+            console.log("message received");
             var msg = JSON.parse(event.data);
+            console.log(msg);
             if (msg["message"] !== undefined){
                 console.log(msg.message);
                 document.getElementById("content").innerHTML = "message Received: " + msg.message;
             }
             if (msg["epoch"] !== undefined){
                 document.getElementById("epoch").innerHTML = "Server time: " + msg.epoch;
+            }
+            if (msg["image"] !== undefined){
+                var imageUrl = URL.createObjectURL(msg["image"]);
+                document.querySelector("#image").src = imageUrl;
             }
         }
 
