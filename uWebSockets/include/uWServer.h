@@ -9,7 +9,10 @@
 #include <algorithm>
 #include <thread>
 #include <fstream>
+#include <deque>
 #include <nlohmann/json.hpp>
+
+#define MAX_DEQUE_LENGTH 100
 
 typedef uWS::WebSocket<uWS::SERVER>* uServer;
 
@@ -20,8 +23,10 @@ namespace uWServer{
     class uWServer {
         int port = 0;
         std::vector<uServer> connections = {};
+        std::deque<std::string> buffer = {}; // inbound messages
         bool connected = false;
         pthread_mutex_t _lock = PTHREAD_MUTEX_INITIALIZER;
+        pthread_mutex_t _lockRead = PTHREAD_MUTEX_INITIALIZER;
         pthread_t _t;
         uWS::Hub *h = nullptr;
 
@@ -35,7 +40,7 @@ namespace uWServer{
 
     public:
 
-        uWServer(int _port = 11111);
+        explicit uWServer(int _port = 11111);
 
         ~uWServer(){
             this->stop();
@@ -45,9 +50,11 @@ namespace uWServer{
 
         void stop();
 
-        void send(const std::string msg);
+        void send(std::string msg);
         void send(const nlohmann::json &jobj);
         void send(std::vector<char> *cArray);
+
+        std::string read();
 
 
     private:
