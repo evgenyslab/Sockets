@@ -12,10 +12,18 @@ uint64_t now(){
 }
 
 typedef uWS::WebSocket<uWS::SERVER>* uServer;
+typedef uWS::WebSocket<uWS::CLIENT>* uClient;
 
 struct ct{
     uWS::Hub *h= nullptr;
     std::vector<uServer> hptr = {};
+    bool connected = false;
+    pthread_mutex_t _lock = PTHREAD_MUTEX_INITIALIZER;
+};
+
+struct cts{
+    uWS::Hub *h= nullptr;
+    std::vector<uClient> hptr = {};
     bool connected = false;
     pthread_mutex_t _lock = PTHREAD_MUTEX_INITIALIZER;
 };
@@ -86,7 +94,21 @@ void send(const std::string msg, void *ptr){
     }
     // create JSON string:
     nlohmann::json j = {"message", msg};
-    std::string jmsg = "{\"message\": \"" + msg + "\"}";
+//    std::string jmsg = "{\"message\": \"" + msg + "\"}";
+    // send to all clients:
+    for(auto cptr: context->hptr)
+        cptr->send(j.dump().c_str());
+}
+
+void sendc(const std::string msg, void *ptr){
+    auto *context = (cts*) ptr;
+    if(!context->connected){
+        printf("No Clients connected, skipping send!\n");
+        return;
+    }
+    // create JSON string:
+    nlohmann::json j = {"message", msg};
+//    std::string jmsg = "{\"message\": \"" + msg + "\"}";
     // send to all clients:
     for(auto cptr: context->hptr)
         cptr->send(j.dump().c_str());
@@ -172,7 +194,7 @@ void * webserver(void *ptr){
 
             printf("\nJSON Message Received:\n");
             std::cout << j.dump(2) << std::endl;
-            send(j.dump(),localContext);
+//            send(j.dump(),localContext);
         }else{
             printf("\nMessage Received: <%s>\n", rmsg.c_str());
             send(rmsg, localContext);
@@ -190,6 +212,90 @@ void * webserver(void *ptr){
 }
 
 
+void * webclient(void *ptr){
+
+
+    cts * localContext = (cts*) ptr;
+    // does this mean the hub is a server or a client?
+    localContext->h->onConnection([localContext](uClient ws, uWS::HttpRequest req) {
+                                      std::cout << "Client: A client connected" << std::endl;
+                                      // seems like theres a new pointer per connected client; need to manage this better.
+                                      pthread_mutex_lock(&localContext->_lock);
+                                      localContext->hptr.emplace_back(ws);
+                                      localContext->connected = true;
+                                      pthread_mutex_unlock(&localContext->_lock);
+                                  }
+    );
+
+    // TOOD: implement this to handle clients correctly...
+    localContext->h->onDisconnection([localContext](uClient ws, int code, char *message, size_t length) {
+        std::cout << "Client CLIENT CLOSE: " << code << std::endl;
+        std::vector<uClient>::iterator it;
+        it = find (localContext->hptr.begin(), localContext->hptr.end(), ws);
+        if (it != localContext->hptr.end()){
+
+            pthread_mutex_lock(&localContext->_lock);
+            localContext->hptr.erase(it);
+            // set connection state based on how many connected clients there are:
+            localContext->connected = localContext->hptr.size() > 0;
+            pthread_mutex_unlock(&localContext->_lock);
+            printf("Client removed!\n");
+            if (localContext->hptr.size()==0){
+                printf("All Clients disconnected!\n");
+            }
+        }else{
+            printf("client NOT found in array\n");
+        }
+    });
+
+    localContext->h->onHttpRequest([](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t, size_t) {
+        const std::string s = "<h1>Hello world!</h1>";
+        if (req.getUrl().valueLength == 1)
+        {
+            res->end(s.data(), s.length());
+        }
+        else
+        {
+            // i guess this should be done more gracefully?
+            res->end(nullptr, 0);
+        }
+    });
+
+    localContext->h->onMessage([localContext](uClient ws, char *message, size_t length, uWS::OpCode opCode){
+        // could match ws to client list if we really wanted to...
+        // could push message into local context work queue.
+        std::string rmsg(message, length);
+        nlohmann::json j;
+        bool jsondata = false;
+        try{
+            j = nlohmann::json::parse(rmsg);
+            jsondata = true;
+        }catch(const std::exception& e){
+            // could not parse JSON
+            jsondata = false;
+        }
+        // KNOWN ISSUE OF HANDLING '\n' in MESSAGE!
+        if (jsondata){
+
+            printf("\nClient JSON Message Received:\n");
+            std::cout << j.dump(2) << std::endl;
+            sendc(j.dump(),localContext);
+        }else{
+            printf("\nClient Message Received: <%s>\n", rmsg.c_str());
+            sendc(rmsg, localContext);
+        }
+
+    });
+
+
+    // connect?
+    localContext->h->connect("ws://127.0.0.1:13049", (void *) 1);
+    printf("Starting Client\n");
+    localContext->h->run();
+
+    pthread_exit(nullptr);
+}
+
 
 int main() {
 
@@ -203,6 +309,18 @@ int main() {
     pthread_t ws;
     // run webserver thread (handles client connections/disconnections):
     pthread_create(&ws, nullptr, webserver, &localContext);
+
+    // instantiate object...
+    cts localContexts;
+    // create local uWS hub object:
+    uWS::Hub hs;
+    // attach hub to local context object:
+    localContexts.h = &hs;
+    // create websever thread
+    pthread_t wss;
+    // run webserver thread (handles client connections/disconnections):
+    pthread_create(&wss, nullptr, webclient, &localContexts);
+    std::this_thread::sleep_for(std::chrono::seconds(2));
     // create clock thread (sends clock info to client):
     pthread_t clock;
     // run the clock thread:
