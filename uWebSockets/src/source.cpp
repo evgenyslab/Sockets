@@ -1,7 +1,7 @@
 //
 //
 
-#include <uWServer.h>
+#include <uWGroup.h>
 #include <iostream>
 //
 
@@ -32,12 +32,33 @@ std::vector<char> readFile(const char* filename)
     return vec;
 }
 
+void * client(void * ctx){
+    uWClient::uWClient * uC = (uWClient::uWClient*) ctx;
+
+    while(1){
+        std::string rr = uC->read();
+        if (!rr.empty()){
+            printf("Client read: %s\n>> ", rr.c_str());
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+
+    }
+}
+
 int main() {
 
     uWServer::uWServer uS(13049);
 
     uS.run();
 
+    uWClient::uWClient uC(13049);
+
+    uC.run();
+
+    // create client thread
+    pthread_t ws;
+    // run client thread (handles client connections/disconnections):
+    pthread_create(&ws, nullptr, client, &uC);
 
     // dummy string for grabbing keyboard input:
     std::string cmd;

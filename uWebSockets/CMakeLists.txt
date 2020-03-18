@@ -24,5 +24,5 @@ endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 add_executable(ws src/ws.cpp)
 target_link_libraries(ws z ssl uv uWS pthread)
 
-add_executable(main src/source.cpp src/uWServer.cpp)
+add_executable(main src/source.cpp src/uWServer.cpp src/uWClient.cpp)
 target_link_libraries(main z ssl uv uWS pthread)
