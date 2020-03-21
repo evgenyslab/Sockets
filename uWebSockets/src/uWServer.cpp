@@ -33,9 +33,11 @@ namespace uWServer{
             return;
         }
         std::string msg(cArray->begin(), cArray->end());
+        auto m = reinterpret_cast<char*>(cArray->data());
         // send to all clients:
-        for(auto cptr: this->connections)
+        for(auto cptr: this->connections){
             cptr->send(msg.c_str(),msg.size(),OpCode::BINARY);
+        }
     }
 
     void uWServer::send(const nlohmann::json &jobj) {
@@ -48,11 +50,35 @@ namespace uWServer{
             cptr->send(jobj.dump().c_str());
     }
 
+    void uWServer::sendRaw(std::vector<char> *cArray) {
+        // send binary char array
+        if(!this->connected){
+            printf("No Clients connected, skipping send!\n");
+            return;
+        }
+        // send to all clients:
+        for(auto cptr: this->connections){
+            cptr->send(cArray->data(),cArray->size(),OpCode::BINARY);
+        }
+    }
+
+    void uWServer::sendRaw(const std::string &msg) {
+        if(!this->connected){
+            printf("No Clients connected, skipping send!\n");
+            return;
+        }
+        // send to all clients:
+        for(auto cptr: this->connections)
+            cptr->send(msg.c_str(), msg.size(), OpCode::BINARY);
+//            std::this_thread::sleep_for(std::chrono::milliseconds(10));}
+    }
+
     void uWServer::_run(){
         // do actual work here...
         // does this mean the hub is a server or a client?
         this->h->onConnection([this](uServer ws, uWS::HttpRequest req) {
               std::cout << "A client connected" << std::endl;
+              printf("%s\n",req.headers->value);
               // seems like theres a new pointer per connected client; need to manage this better.
               pthread_mutex_lock(&this->_lock);
               this->connections.emplace_back(ws);

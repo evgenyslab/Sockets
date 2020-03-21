@@ -4,7 +4,7 @@
 #ifndef WEBSOCKETS_TESTING_UWSERVER_H
 #define WEBSOCKETS_TESTING_UWSERVER_H
 
-#include <uWS/uWS.h>
+#include <uWS.h>
 #include <iostream>
 #include <algorithm>
 #include <thread>
@@ -53,6 +53,9 @@ namespace uWServer{
         void send(std::string msg);
         void send(const nlohmann::json &jobj);
         void send(std::vector<char> *cArray);
+        void sendRaw(std::vector<char> *cArray);
+        void sendRaw(char *cArray, int len);
+        void sendRaw(const std::string &cArray);
 
         std::string read();
 
