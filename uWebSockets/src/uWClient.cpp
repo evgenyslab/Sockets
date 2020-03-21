@@ -52,7 +52,8 @@ namespace uWClient{
         // do actual work here...
         // does this mean the hub is a server or a client?
         this->h->onConnection([this](uClient ws, uWS::HttpRequest req) {
-              std::cout << "A client connected" << std::endl;
+              std::cout << "Client Connected to Server!" << std::endl;
+              printf("%s\n",req.headers->value);
               // seems like theres a new pointer per connected client; need to manage this better.
               pthread_mutex_lock(&this->_lock);
               this->connections.emplace_back(ws);
@@ -97,16 +98,17 @@ namespace uWClient{
         this->h->onMessage([this](uClient ws, char *message, size_t length, uWS::OpCode opCode){
             // could match ws to client list if we really wanted to...
             // could push message into local context work queue.
+            std::vector<char> msg(message, message+length);
             std::string rmsg(message, length);
             pthread_mutex_lock(&this->_lockRead);
             // fix amount of memory used for buffer... it will drop oldest messages if exceeded.
             if (this->buffer.size()==MAX_DEQUE_LENGTH)
                 this->buffer.pop_front();
-            this->buffer.emplace_back(rmsg);
+            this->buffer.emplace_back(msg);
             pthread_mutex_unlock(&this->_lockRead);
         });
 
-
+        // TODO: loop this so reconnection attempts if not connected to server.
         // connect Client
         this->h->connect("ws://127.0.0.1:" + std::to_string(this->port), (void *) 1);
         printf("Starting Client\n");
@@ -118,9 +120,9 @@ namespace uWClient{
         pthread_kill(this->_t, 0);
     }
 
-    std::string uWClient::read(){
+    std::vector<char> uWClient::read(){
         pthread_mutex_lock(&this->_lockRead);
-        std::string ret;
+        std::vector<char> ret;
         if (!this->buffer.empty()){
             ret = this->buffer.front();
             this->buffer.pop_front();
