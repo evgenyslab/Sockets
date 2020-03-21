@@ -4,7 +4,7 @@
 #ifndef WEBSOCKETS_TESTING_UWCLIENT_H
 #define WEBSOCKETS_TESTING_UWCLIENT_H
 
-#include <uWS/uWS.h>
+#include <uWS.h>
 #include <iostream>
 #include <algorithm>
 #include <thread>
@@ -23,7 +23,7 @@ namespace uWClient{
     class uWClient {
         int port = 0;
         std::vector<uClient> connections = {};
-        std::deque<std::string> buffer = {}; // inbound messages
+        std::deque<std::vector<char>> buffer = {}; // inbound messages
         bool connected = false;
         pthread_mutex_t _lock = PTHREAD_MUTEX_INITIALIZER;
         pthread_mutex_t _lockRead = PTHREAD_MUTEX_INITIALIZER;
@@ -54,7 +54,7 @@ namespace uWClient{
         void send(const nlohmann::json &jobj);
         void send(std::vector<char> *cArray);
 
-        std::string read();
+        std::vector<char> read();
 
 
     private:
