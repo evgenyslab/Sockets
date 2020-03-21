@@ -3,6 +3,7 @@
 
 #include <uWGroup.h>
 #include <iostream>
+#include <random>
 //
 
 std::vector<char> readFile(const char* filename)
@@ -32,13 +33,37 @@ std::vector<char> readFile(const char* filename)
     return vec;
 }
 
+std::string randomString(std::size_t length)
+{
+    std::random_device random_device;
+    std::mt19937 generator(random_device());
+    std::uniform_int_distribution<int> distribution(0,255);
+
+    std::string random_string;
+
+    for (std::size_t i = 0; i < length; ++i)
+    {
+        random_string += (char) distribution(generator);
+
+    }
+
+    return random_string;
+}
+
 void * client(void * ctx){
     uWClient::uWClient * uC = (uWClient::uWClient*) ctx;
 
     while(1){
-        std::string rr = uC->read();
+        auto rr = uC->read();
         if (!rr.empty()){
-            printf("Client read: %s\n>> ", rr.c_str());
+            if (rr.size()>100)
+                printf("Client read: %ld bytes\n>> ", rr.size());
+            else{
+                std::string ret(rr.begin(), rr.end());
+                printf("Client read: %ld bytes: %s\n>> ", rr.size(), ret.c_str());
+            }
+
+
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
@@ -51,14 +76,14 @@ int main() {
 
     uS.run();
 
-    uWClient::uWClient uC(13049);
-
-    uC.run();
-
-    // create client thread
-    pthread_t ws;
-    // run client thread (handles client connections/disconnections):
-    pthread_create(&ws, nullptr, client, &uC);
+//    uWClient::uWClient uC(13049);
+//
+//    uC.run();
+//
+//    // create client thread
+//    pthread_t ws;
+//    // run client thread (handles client connections/disconnections):
+//    pthread_create(&ws, nullptr, client, &uC);
 
     // dummy string for grabbing keyboard input:
     std::string cmd;
@@ -77,11 +102,36 @@ int main() {
             // try to read from uS buffer
             auto r = uS.read();
             printf("received:\n%s\n", r.c_str());
-        }else if (cmd =="load") {
+        }else if (cmd =="jload") {
             // can't use json with images in any way, UTF-8 decoding breaks it.
             // TODO: look at using msgpack; browers should support
             auto I = readFile("/Users/en/Git/Sockets/uWebSockets/test.jpeg");
             uS.send(&I);
+        }else if (cmd =="pload") {
+            // can't use json with images in any way, UTF-8 decoding breaks it.
+            // TODO: look at using msgpack; browers should support
+            auto I = readFile("/Users/en/Git/Sockets/uWebSockets/pngc.png");
+            uS.send(&I);
+        }else if (cmd =="plarge") {
+            // can't use json with images in any way, UTF-8 decoding breaks it.
+            // TODO: look at using msgpack; browers should support
+            auto I = readFile("/Users/en/Git/Sockets/uWebSockets/large_png.png");
+            uS.send(&I);
+        }else if (cmd.substr(0,4) =="rand") {
+            // get length of random:
+            int l;
+            if (cmd.size()>4)
+                l = atoi(cmd.substr(4,cmd.size()-1).c_str());
+            else
+                l = 260000;
+            // can't use json with images in any way, UTF-8 decoding breaks it.
+            // TODO: I THINK THERE IS A BYTE SEND LIMIT! CHROME ISSUE!!!!
+            auto I = randomString(l);
+            uS.sendRaw(I); // TODO FOR SOME REASON THIS ONLY WORKS AFTER A JLOAD;
+            // TODO: I think uws adjusts sizes on the go
+            // TODO: seems like on connection to uWS, initial limit is between 250-260kB, why? what about Safari?
+            // Chrome seems to be ok with 260kB but not more...
+
         }else{
                 // send message to connected client (browser)
                 nlohmann::json j = {{"message", cmd}};
