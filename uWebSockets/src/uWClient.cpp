@@ -48,9 +48,20 @@ namespace uWClient{
             cptr->send(jobj.dump().c_str());
     }
 
+    void uWClient::_tryReconnect(){
+        pthread_mutex_lock(&this->_lock);
+        bool _connected = this->connected;
+        pthread_mutex_unlock(&this->_lock);
+        while(!_connected){
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+            this->h->connect("ws://127.0.0.1:" + std::to_string(this->port), (void *) 1);
+        }
+    }
+
     void uWClient::_run(){
         // do actual work here...
         // does this mean the hub is a server or a client?
+        // TODO: this should be connecting to ONE server!
         this->h->onConnection([this](uClient ws, uWS::HttpRequest req) {
               std::cout << "Client Connected to Server!" << std::endl;
               printf("%s\n",req.headers->value);
@@ -62,6 +73,7 @@ namespace uWClient{
           }
         );
 
+        // TODO: this needs to try to reconnect:
         this->h->onDisconnection([this](uClient ws, int code, char *message, size_t length) {
             std::cout << "CLIENT CLOSE: " << code << std::endl;
             std::vector<uClient>::iterator it;
@@ -76,11 +88,13 @@ namespace uWClient{
                 printf("Client removed!\n");
                 if (this->connections.empty()){
                     printf("All Clients disconnected!\n");
+                    this->_tryReconnect();
                 }
             }else{
                 printf("client NOT found in array\n");
             }
         });
+
 
 //        this->h->onHttpRequest([](uWS::HttpResponse *res, uWS::HttpRequest req, char *data, size_t, size_t) {
 //            const std::string s = "<h1>Hello world!</h1>";
@@ -109,10 +123,9 @@ namespace uWClient{
         });
 
         // TODO: loop this so reconnection attempts if not connected to server.
-        // connect Client
         this->h->connect("ws://127.0.0.1:" + std::to_string(this->port), (void *) 1);
         printf("Starting Client\n");
-        this->h->run();
+        this->h->run(); // <- blocking call
         pthread_exit(nullptr);
     };
 

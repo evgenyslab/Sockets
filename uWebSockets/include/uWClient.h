@@ -37,6 +37,8 @@ namespace uWClient{
             return nullptr;
         }
 
+        void _tryReconnect();
+
 
     public:
 
