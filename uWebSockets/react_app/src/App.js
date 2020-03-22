@@ -132,7 +132,9 @@ class App extends Component {
     };
 
     updateImage = (event) =>{
-        console.log("Raw received");
+        var blob = new Blob([event.data]);
+        console.log("Raw received, bytes: " + blob.size);
+
         document.querySelector("#image").src = URL.createObjectURL(event.data);
         document.querySelector("#image").width = 200;
     };
