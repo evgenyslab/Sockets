@@ -27,7 +27,7 @@ file(GLOB UWS
 #target_link_libraries(ws z ssl uv uWS pthread)
 
 # if compiling uWS directly (NEEDS CRYPTO!!):
-add_executable(server src/source.cpp ${UWS} src/uWServer.cpp src/uWClient.cpp )
+add_executable(server src/server.cpp ${UWS} src/uWServer.cpp src/uWClient.cpp )
 target_link_libraries(server crypto z uv ssl  pthread)
 
 # if compiling using library installed uWS:
