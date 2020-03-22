@@ -2,10 +2,11 @@
 
 project for testing websocket based communication from C++ backend to website front end.
 
-requires installation of uWebsockets v0.14:
+This repo has a git submodule with uWebsockets that is compiled together with test code.
 
-https://github.com/uNetworking/uWebSockets/tree/v0.14
+# Installing uWebSockets
 
+To install uWebsockets on system use the following..
 
 ## Linux install:
 
@@ -43,4 +44,9 @@ Also used `npx create-react-app` to see if a rudimentary react app could be made
 seems to work!
 
 **TODO**: figure out how to configure `ws` on chrome client-side to correctly handle large messages.
+
+It seems as thought its possible to push up ws to send more data correctly by sending larger and larger sized 
+objects
+
+How to make ws client reconnect automatically?
 

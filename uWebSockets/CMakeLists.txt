@@ -6,7 +6,7 @@ include_directories(
         include
         usr/include
         /usr/local/include
-        ../../uWebSockets/src
+        uWebSockets/src
 )
 
 link_directories(/usr/local/lib)
@@ -20,7 +20,7 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
 file(GLOB UWS
-        "../../uWebSockets/src/*.c*"
+        "uWebSockets/src/*.c*"
         )
 
 #add_executable(ws src/ws.cpp)
