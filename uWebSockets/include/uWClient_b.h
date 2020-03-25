@@ -41,6 +41,8 @@ private:
     void _run(){
         // create hub object local to thread:
         uWS::Hub h;
+        // TODO: need to only allow one server at a time; can't handle this right now, seems to have
+        // problems when server connects
 
         h.onConnection([this](uWS::WebSocket<uWS::CLIENT>* ws, uWS::HttpRequest req) {
            std::cout << "Client connected to Server on port: " << this->port << std::endl;
@@ -67,15 +69,17 @@ private:
             pthread_mutex_unlock(&this->_rxmutex);
         });
 
-        // TODO: loop this so reconnection attempts if not connected to server.
-        h.connect("ws://127.0.0.1:" + std::to_string(this->port), (void *) 1);
-        // not connected until run or poll is called...
+        // this
         printf("Starting Client\nConnection status: %d\n", this->connected);
-        h.run();
         bool exit = false;
         while(!exit){
-            // need to poll and check for connect & try to reconnect?
-
+            // check if connected:
+            if (!this->connected){
+                // try to connect, I suspect might need to wrap this on the whole thread...
+                h.connect("ws://127.0.0.1:" + std::to_string(this->port), (void *) 1);
+            }
+            h.poll();
+            std::this_thread::sleep_for(std::chrono::milliseconds(20));
         }
         h.run(); // <- blocking call
 
