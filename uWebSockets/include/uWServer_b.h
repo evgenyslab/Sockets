@@ -47,12 +47,13 @@ private:
         uWS::Hub h;
 
         h.onConnection([this](uWS::WebSocket<uWS::SERVER>* ws, uWS::HttpRequest req) {
-                           std::cout << "A client connected" << std::endl;
-                           // seems like theres a new pointer per connected client; need to manage this better.
-                           pthread_mutex_lock(&this->_lock);
-                           this->connections.emplace_back(ws);
-                           this->connected = true;
-                           pthread_mutex_unlock(&this->_lock);
+           std::cout << "A client connected" << std::endl;
+           printf("%s\n",req.headers->value);
+           // seems like theres a new pointer per connected client; need to manage this better.
+           pthread_mutex_lock(&this->_lock);
+           this->connections.emplace_back(ws);
+           this->connected = true;
+           pthread_mutex_unlock(&this->_lock);
                        }
         );
 
