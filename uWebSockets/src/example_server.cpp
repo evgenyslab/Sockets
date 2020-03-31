@@ -3,6 +3,7 @@
 #include <iostream>
 #include <random>
 #include <msgpack.hpp>
+#include <fstream>
 
 /* Try with new single
  * TODO: need to speed test this somehow
@@ -25,6 +26,33 @@ std::string randomString(std::size_t length)
     return random_string;
 }
 
+std::vector<char> readFile(const char* filename)
+{
+    // open the file:
+    std::ifstream file(filename, std::ios::binary);
+
+    // Stop eating new lines in binary mode!!!
+    file.unsetf(std::ios::skipws);
+
+    // get its size:
+    std::streampos fileSize;
+
+    file.seekg(0, std::ios::end);
+    fileSize = file.tellg();
+    file.seekg(0, std::ios::beg);
+
+    // reserve capacity
+    std::vector<char> vec;
+    vec.reserve(fileSize);
+
+    // read the data:
+    vec.insert(vec.begin(),
+               std::istream_iterator<char>(file),
+               std::istream_iterator<char>());
+
+    return vec;
+}
+
 int main(){
 
     uWServer_b server(13049);
@@ -33,13 +61,7 @@ int main(){
     msgpack::sbuffer streamBuffer;  // stream buffer
     // create a key-value pair packer linked to stream-buffer
     msgpack::packer<msgpack::sbuffer> packer(&streamBuffer);
-    // create key-value map definition, n = number of items in map...
-    packer.pack_map(1);                                         // MESSAGE 1
-    // Populate:
-    // key
-    packer.pack(std::string("x"));
 
-    streamBuffer.data();
 
     bool exit = false;
     // wait for a moment while uwebsockets starts...
@@ -47,35 +69,43 @@ int main(){
         printf(">> ");
         std::string cmd;
         std::getline(std::cin, cmd);
-        if (cmd.substr(0,4) =="rand") {
-            // get length of random:
-            int l;
-            if (cmd.size()>4)
-                l = atoi(cmd.substr(4,cmd.size()-1).c_str());
-            else
-                l = 260000;
-            auto I = randomString(l);
-            server.send(I);
-        }
-        else if(cmd == "exit")
+        if(cmd == "exit")
             exit = true;
-        else if(cmd.substr(0,3) =="mpk"){
-            int l;
-            if (cmd.size()>4)
-                l = atoi(cmd.substr(4,cmd.size()-1).c_str());
-            else
-                l = 10000;
-            auto I = randomString(l);
+        else if (cmd == "test1"){
+            auto I = readFile("/Users/en/Git/Sockets/uWebSockets/test.jpeg");
             streamBuffer.clear();
-
             packer.pack_map(1);
-            packer.pack("data");
-//            packer.pack_bin(I.size());
+            packer.pack("image_binary");
+            packer.pack_bin(I.size());
             packer.pack_bin_body(I.data(), I.size());
             server.c_send(streamBuffer.data(), streamBuffer.size()); // streamsize isnt correct yet...
         }
+        else if (cmd == "test2"){
+            auto I = readFile("/Users/en/Git/Sockets/uWebSockets/test.png");
+            streamBuffer.clear();
+            packer.pack_map(1);
+            packer.pack("image_binary");
+            packer.pack_bin(I.size());
+            packer.pack_bin_body(I.data(), I.size());
+            server.c_send(streamBuffer.data(), streamBuffer.size()); // streamsize isnt correct yet...
+        }else if (cmd == "test3"){
+            auto I = readFile("/Users/en/Git/Sockets/uWebSockets/large_png.png");
+            streamBuffer.clear();
+            packer.pack_map(1);
+            packer.pack("image_binary");
+            packer.pack_bin(I.size());
+            packer.pack_bin_body(I.data(), I.size());
+            server.c_send(streamBuffer.data(), streamBuffer.size()); // streamsize isnt correct yet...
+        }else if(cmd.substr(0,4) =="load"){
+            // check if file and load and send as image...
+        }
         else if(!cmd.empty()){
-            server.send(cmd);
+            streamBuffer.clear();
+            packer.pack_map(1);
+            packer.pack("message");
+            packer.pack(cmd);
+            server.c_send(streamBuffer.data(), streamBuffer.size()); // streamsize isnt correct yet...
+
         }
     }
 
