@@ -32,6 +32,28 @@ sudo make install
 
 ## Testing Notes
 
+### March 20 2020
+
+In Node.h for client side socket connection is done only once, meaning that the client 
+must be run after the server is run. The question is can Node.h be adapted to try to automatically
+connect and reconnect to server in the absence of a server?
+
+in [Node.h](uWebSockets/src/Node.h):
+```cpp
+while (::connect(fd, result->ai_addr, result->ai_addrlen) < 0){
+            ::close(fd);
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+            // reset...
+            fd = netContext->createSocket(result->ai_family, result->ai_socktype, result->ai_protocol);
+            if (fd == INVALID_SOCKET) {
+                freeaddrinfo(result);
+                return nullptr;
+            }
+        }
+```
+
+### Older
+
 uWebSockets seems to work really well. In combination with js-side WS client or local C++ client JSON
 string messages and binary data can be easily passed.
 
