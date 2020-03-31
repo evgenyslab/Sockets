@@ -71,16 +71,18 @@ private:
 
         // this
         printf("Starting Client\nConnection status: %d\n", this->connected);
-        bool exit = false;
-        while(!exit){
-            // check if connected:
-            if (!this->connected){
-                // try to connect, I suspect might need to wrap this on the whole thread...
-                h.connect("ws://127.0.0.1:" + std::to_string(this->port), (void *) 1);
-            }
-            h.poll();
-            std::this_thread::sleep_for(std::chrono::milliseconds(20));
-        }
+        // try to connect, I suspect might need to wrap this on the whole thread...
+        // TODO: to get this to reconnect to new server need work. see readme
+        h.connect("ws://127.0.0.1:" + std::to_string(this->port), (void *) 1);
+//        bool exit = false;
+//        while(!exit){
+//            // check if connected:
+//            if (!this->connected){
+//
+//            }
+//            h.poll();
+//            std::this_thread::sleep_for(std::chrono::milliseconds(20));
+//        }
         h.run(); // <- blocking call
 
     }
