@@ -15,14 +15,17 @@ class App extends Component {
         test_img: null
     };
 
+    // need to use this.. why? something about loading this when page loads.
     componentWillMount() {
         ws.onopen = () => {
             console.log("Connected");
             // connected = true;
+            document.getElementById("connection_info").innerHTML = "Connected!";
         };
 
         ws.onclose = () => {
             // connected = false;
+            document.getElementById("connection_info").innerHTML = "Not Connected";
         };
 
         ws.onmessage =  (event) => {
@@ -38,6 +41,10 @@ class App extends Component {
                 if ("image_binary" in decoded){
                     // parse & update image...
                     this.updateImage(decoded["image_binary"]);
+                }
+                if ("message" in decoded){
+                    // parse & update image...
+                    document.getElementById("message").innerHTML = "message Received: " + decoded.message;
                 }
             };
             // call function to decode data:
@@ -61,6 +68,7 @@ class App extends Component {
         <div className="App">
             <header className="App-header">
                 <img src={logo} className="App-logo" alt="logo" />
+                <div id="connection_info">Not Connected.</div>
                 <div id="message"></div>
                 <img id="image"/>
             </header>
