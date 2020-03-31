@@ -1,4 +1,4 @@
-#include <uWS/uWS.h>
+#include <uWS.h>
 #include <iostream>
 #include <algorithm>
 #include <thread>
