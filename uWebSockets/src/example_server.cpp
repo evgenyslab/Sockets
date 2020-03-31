@@ -2,6 +2,7 @@
 #include <thread>
 #include <iostream>
 #include <random>
+#include <msgpack.hpp>
 
 /* Try with new single
  * TODO: need to speed test this somehow
@@ -29,6 +30,17 @@ int main(){
     uWServer_b server(13049);
     server.run();
 
+    msgpack::sbuffer streamBuffer;  // stream buffer
+    // create a key-value pair packer linked to stream-buffer
+    msgpack::packer<msgpack::sbuffer> packer(&streamBuffer);
+    // create key-value map definition, n = number of items in map...
+    packer.pack_map(1);                                         // MESSAGE 1
+    // Populate:
+    // key
+    packer.pack(std::string("x"));
+
+    streamBuffer.data();
+
     bool exit = false;
     // wait for a moment while uwebsockets starts...
     while(!exit) {
@@ -47,6 +59,21 @@ int main(){
         }
         else if(cmd == "exit")
             exit = true;
+        else if(cmd.substr(0,3) =="mpk"){
+            int l;
+            if (cmd.size()>4)
+                l = atoi(cmd.substr(4,cmd.size()-1).c_str());
+            else
+                l = 10000;
+            auto I = randomString(l);
+            streamBuffer.clear();
+
+            packer.pack_map(1);
+            packer.pack("data");
+//            packer.pack_bin(I.size());
+            packer.pack_bin_body(I.data(), I.size());
+            server.c_send(streamBuffer.data(), streamBuffer.size()); // streamsize isnt correct yet...
+        }
         else if(!cmd.empty()){
             server.send(cmd);
         }

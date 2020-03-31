@@ -6,6 +6,7 @@ include_directories(
         include
         usr/include
         /usr/local/include
+        msgpack-c/include
         uWebSockets/src
 )
 
@@ -18,6 +19,8 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     link_directories(/usr/local/opt/openssl/lib)
 
 endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+
+add_subdirectory(msgpack-c)
 
 file(GLOB UWS
         "uWebSockets/src/*.c*"
