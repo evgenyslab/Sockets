@@ -30,7 +30,17 @@ make -j 8
 sudo make install
 ```
 
+## TODO List
+
+- [ ] loopback speedtest from server to webclient back to server @ different package sizes
+- [ ] s++ client auto reconnect 
+
 ## Testing Notes
+
+### March 31 2020
+
+Updated the App.js function with fileReader to decode byte array using msgpack &
+added messagepacking of binary data to send to server
 
 ### March 20 2020
 
