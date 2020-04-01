@@ -82,12 +82,12 @@ private:
         h.onMessage([this](uWS::WebSocket<uWS::SERVER>* ws, char *message, size_t length, uWS::OpCode opCode){
             // could match ws to client list if we really wanted to...
             // could push message into local context work queue.
-            std::string rmsg(message, length);
-            printf("\nMessage Received: <%s>\n", rmsg.c_str());
+//            std::string rmsg(message, length);
+//            printf("\nMessage Received: <%s>\n", rmsg.c_str());
             // lock queue
             pthread_mutex_lock(&this->_rxmutex);
             // TODO: insert message into queue
-            this->rxqueue.emplace_back(rmsg);
+            this->rxqueue.emplace_back(std::string(message,length));
             pthread_mutex_unlock(&this->_rxmutex);
         });
 
@@ -149,6 +149,24 @@ public:
             this->txqueue.pop_front(); // remove first msg
         this->txqueue.emplace_back(rmsg);
         pthread_mutex_unlock(&this->_txmutex);
+    };
+    // blocking reads message from queue
+    void read_blocking(std::string &ret){
+        bool received = false;
+        while(!received){
+            // lock queue
+            pthread_mutex_lock(&this->_rxmutex);
+            if(!this->rxqueue.empty()){
+                ret = this->rxqueue.front();
+                this->rxqueue.pop_front();
+                received = true;
+            }
+            pthread_mutex_unlock(&this->_rxmutex);
+            if(!received)
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
+
+
     };
     // reads message from queue
     void read(std::string &ret){
