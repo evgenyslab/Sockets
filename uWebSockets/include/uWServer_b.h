@@ -80,13 +80,9 @@ private:
 
 
         h.onMessage([this](uWS::WebSocket<uWS::SERVER>* ws, char *message, size_t length, uWS::OpCode opCode){
-            // could match ws to client list if we really wanted to...
-            // could push message into local context work queue.
-//            std::string rmsg(message, length);
-//            printf("\nMessage Received: <%s>\n", rmsg.c_str());
             // lock queue
             pthread_mutex_lock(&this->_rxmutex);
-            // TODO: insert message into queue
+            // put message into queue
             this->rxqueue.emplace_back(std::string(message,length));
             pthread_mutex_unlock(&this->_rxmutex);
         });
@@ -94,21 +90,20 @@ private:
         if (h.listen("0.0.0.0",this->port)) {
             printf("Server listening on port: %d\n", this->port);
             // do I need loop here now?
-            while(true){
+            h.run();
+            while(false){
                 h.poll();
                 // check for new messages to send (tx)
                 // lock queue
                 pthread_mutex_lock(&this->_txmutex);
-                std::string ret;
                 // check if send queue is empty:
                 while (!this->txqueue.empty()){
-                    ret = this->txqueue.front();
-                    for (auto c:connections)
-                        c->send(ret.c_str(),ret.size(),OpCode::BINARY);
+                    for (auto c:this->connections)
+                        c->send(this->txqueue.front().c_str(),this->txqueue.front().size(),OpCode::BINARY);
                     this->txqueue.pop_front();
                 }
                 pthread_mutex_unlock(&this->_txmutex);
-                std::this_thread::sleep_for(std::chrono::milliseconds(25));
+                std::this_thread::sleep_for(std::chrono::milliseconds(2));
             }
         }
 
@@ -130,6 +125,12 @@ public:
         pthread_kill(this->_tid, 0);
     };
     // send message
+    void _send(char * cmsg, size_t l){
+        std::string msg(cmsg,l);
+        for (auto c:this->connections)
+            c->send(msg.c_str(),msg.size(),OpCode::BINARY);
+
+    }
     // TODO: might not work for mpk raw data...
     void send(const std::string &rmsg){
         // lock queue
@@ -163,7 +164,7 @@ public:
             }
             pthread_mutex_unlock(&this->_rxmutex);
             if(!received)
-                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                std::this_thread::sleep_for(std::chrono::milliseconds(2));
         }
 
 

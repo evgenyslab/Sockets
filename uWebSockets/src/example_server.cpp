@@ -116,10 +116,10 @@ int main(){
             packer.pack_bin(I.size());
             packer.pack_bin_body(I.data(), I.size());
             std::vector<double> dts;
-            for (int k =0;k<100;k++){
+            for (int k =0;k<1;k++){
                 // time from here:
                 auto ta = now();
-                server.c_send(streamBuffer.data(), streamBuffer.size()); // streamsize isnt correct yet...
+                server._send(streamBuffer.data(), streamBuffer.size()); // streamsize isnt correct yet...
                 // now to read...
                 std::string ret;
                 server.read_blocking(ret);
@@ -139,7 +139,7 @@ int main(){
             packer.pack_map(1);
             packer.pack("message");
             packer.pack(cmd);
-            server.c_send(streamBuffer.data(), streamBuffer.size()); // streamsize isnt correct yet...
+            server._send(streamBuffer.data(), streamBuffer.size()); // streamsize isnt correct yet...
 
         }
     }
