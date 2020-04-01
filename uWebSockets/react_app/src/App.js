@@ -1,7 +1,7 @@
 import React, {Component} from 'react';
 import logo from './logo.svg';
 import './App.css';
-import { encode, decode } from "@msgpack/msgpack";
+import { decode } from "@msgpack/msgpack";
 
 
 
@@ -16,7 +16,7 @@ class App extends Component {
     };
 
     // need to use this.. why? something about loading this when page loads.
-    componentWillMount() {
+    UNSAFE_componentWillMount() {
         ws.onopen = () => {
             console.log("Connected");
             // connected = true;
@@ -74,7 +74,7 @@ class App extends Component {
                 <img src={logo} className="App-logo" alt="logo" />
                 <div id="connection_info">Not Connected.</div>
                 <div id="message"></div>
-                <img id="image"/>
+                <img id="image" alt=""/>
             </header>
         </div>
         );
