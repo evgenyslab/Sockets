@@ -8,6 +8,9 @@
 /* Try with new single
  * TODO: need to speed test this somehow
  * */
+uint64_t now(){
+    return (std::chrono::duration_cast<std::chrono::nanoseconds >(std::chrono::system_clock::now().time_since_epoch())).count();
+}
 
 std::string randomString(std::size_t length)
 {
@@ -98,6 +101,38 @@ int main(){
             server.c_send(streamBuffer.data(), streamBuffer.size()); // streamsize isnt correct yet...
         }else if(cmd.substr(0,4) =="load"){
             // check if file and load and send as image...
+        }else if(cmd.substr(0,9) == "speedtest"){
+            // try to get bytpes after:
+            int l;
+            if (cmd.size()>9)
+                l = atoi(cmd.substr(9,cmd.size()-1).c_str());
+            else
+                l = 1;
+            auto I = randomString(l);
+            // create speed test
+            streamBuffer.clear();
+            packer.pack_map(1);
+            packer.pack("loopback");
+            packer.pack_bin(I.size());
+            packer.pack_bin_body(I.data(), I.size());
+            std::vector<double> dts;
+            for (int k =0;k<100;k++){
+                // time from here:
+                auto ta = now();
+                server.c_send(streamBuffer.data(), streamBuffer.size()); // streamsize isnt correct yet...
+                // now to read...
+                std::string ret;
+                server.read_blocking(ret);
+                // to here...
+                dts.emplace_back(now() - ta);
+            }
+            double sum=0, mu;
+            for (auto k : dts){
+                sum += k;
+            }
+            mu = (sum/double(dts.size()))*1e-6;
+            printf("Average roundtrip time: %f ms\n",mu);
+            int j = 0;
         }
         else if(!cmd.empty()){
             streamBuffer.clear();
