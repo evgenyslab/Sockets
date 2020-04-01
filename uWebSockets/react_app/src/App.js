@@ -46,6 +46,10 @@ class App extends Component {
                     // parse & update image...
                     document.getElementById("message").innerHTML = "message Received: " + decoded.message;
                 }
+                if ("loopback" in decoded){
+                    // send back response
+                    ws.send("message received");
+                }
             };
             // call function to decode data:
             reader.readAsArrayBuffer(event.data);
