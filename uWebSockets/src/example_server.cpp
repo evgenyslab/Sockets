@@ -81,7 +81,7 @@ int main(){
             packer.pack("image_binary");
             packer.pack_bin(I.size());
             packer.pack_bin_body(I.data(), I.size());
-            server.c_send(streamBuffer.data(), streamBuffer.size()); // streamsize isnt correct yet...
+            server._send(streamBuffer.data(), streamBuffer.size()); // streamsize isnt correct yet...
         }
         else if (cmd == "test2"){
             auto I = readFile("/Users/en/Git/Sockets/uWebSockets/test.png");
@@ -90,7 +90,7 @@ int main(){
             packer.pack("image_binary");
             packer.pack_bin(I.size());
             packer.pack_bin_body(I.data(), I.size());
-            server.c_send(streamBuffer.data(), streamBuffer.size()); // streamsize isnt correct yet...
+            server._send(streamBuffer.data(), streamBuffer.size()); // streamsize isnt correct yet...
         }else if (cmd == "test3"){
             auto I = readFile("/Users/en/Git/Sockets/uWebSockets/large_png.png");
             streamBuffer.clear();
@@ -98,7 +98,7 @@ int main(){
             packer.pack("image_binary");
             packer.pack_bin(I.size());
             packer.pack_bin_body(I.data(), I.size());
-            server.c_send(streamBuffer.data(), streamBuffer.size()); // streamsize isnt correct yet...
+            server._send(streamBuffer.data(), streamBuffer.size()); // streamsize isnt correct yet...
         }else if(cmd.substr(0,4) =="load"){
             // check if file and load and send as image...
         }else if(cmd.substr(0,9) == "speedtest"){
@@ -116,7 +116,7 @@ int main(){
             packer.pack_bin(I.size());
             packer.pack_bin_body(I.data(), I.size());
             std::vector<double> dts;
-            for (int k =0;k<1;k++){
+            for (int k =0;k<100;k++){
                 // time from here:
                 auto ta = now();
                 server._send(streamBuffer.data(), streamBuffer.size()); // streamsize isnt correct yet...
