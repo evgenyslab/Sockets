@@ -89,22 +89,9 @@ private:
 
         if (h.listen("0.0.0.0",this->port)) {
             printf("Server listening on port: %d\n", this->port);
-            // do I need loop here now?
+            // add async to server hub to correctly handle asynchronous sending...
+            h.getDefaultGroup<uWS::SERVER>().addAsync();
             h.run();
-            while(false){
-                h.poll();
-                // check for new messages to send (tx)
-                // lock queue
-                pthread_mutex_lock(&this->_txmutex);
-                // check if send queue is empty:
-                while (!this->txqueue.empty()){
-                    for (auto c:this->connections)
-                        c->send(this->txqueue.front().c_str(),this->txqueue.front().size(),OpCode::BINARY);
-                    this->txqueue.pop_front();
-                }
-                pthread_mutex_unlock(&this->_txmutex);
-                std::this_thread::sleep_for(std::chrono::milliseconds(2));
-            }
         }
 
     }
@@ -125,32 +112,17 @@ public:
         pthread_kill(this->_tid, 0);
     };
     // send message
-    void _send(char * cmsg, size_t l){
+    void _send(char * cmsg, size_t l, bool BINARY = true){
         std::string msg(cmsg,l);
-        for (auto c:this->connections)
-            c->send(msg.c_str(),msg.size(),OpCode::BINARY);
-
+        if (BINARY){
+            for (auto c:this->connections)
+                c->send(msg.c_str(),msg.size(),OpCode::BINARY);
+        }else{
+            for (auto c:this->connections)
+                c->send(msg.c_str(),msg.size(),OpCode::TEXT);
+        }
     }
-    // TODO: might not work for mpk raw data...
-    void send(const std::string &rmsg){
-        // lock queue
-        pthread_mutex_lock(&this->_txmutex);
-        // check size of queue
-        if(this->txqueue.size()==MAX_MESSAGE_QUEUE)
-            this->txqueue.pop_front(); // remove first msg
-        this->txqueue.emplace_back(rmsg);
-        pthread_mutex_unlock(&this->_txmutex);
-    };
-    void c_send(char * cmsg, size_t l){
-        std::string rmsg(cmsg, l);
-        // lock queue
-        pthread_mutex_lock(&this->_txmutex);
-        // check size of queue
-        if(this->txqueue.size()==MAX_MESSAGE_QUEUE)
-            this->txqueue.pop_front(); // remove first msg
-        this->txqueue.emplace_back(rmsg);
-        pthread_mutex_unlock(&this->_txmutex);
-    };
+
     // blocking reads message from queue
     void read_blocking(std::string &ret){
         bool received = false;
