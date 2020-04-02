@@ -4,38 +4,29 @@ project for testing websocket based communication from C++ backend to website fr
 
 This repo has a git submodule with uWebsockets that is compiled together with test code.
 
-# Installing uWebSockets
-
-To install uWebsockets on system use the following..
-
-## Linux install:
-
-```bash
-git clone https://github.com/uNetworking/uWebSockets.git
-cd uWebSockets
-git checkout v0.14
-make -j 8
-sudo make install
-```
-
-
-## Mac Install:
-
-```bash
-brew install openssl zlib libuv
-git clone https://github.com/uNetworking/uWebSockets.git
-cd uWebSockets
-git checkout v0.14
-make -j 8
-sudo make install
-```
-
 ## TODO List
 
-- [ ] loopback speedtest from server to webclient back to server @ different package sizes
-- [ ] s++ client auto reconnect 
+- [ ] s++ client auto reconnect
+- [ ] cython/python wrapping server + client headers
+- [ ] App.js ws socket select url
+- [x] loopback speedtest from server to webclient back to server @ different package sizes
 
 ## Testing Notes
+
+### April 2 2020
+
+Was able to configure the `uWS::Hub` on both client and server to correctly handle larger
+amount of data. Specifically, in the server, needed to select hub server group and 
+enable async:
+
+```cpp
+if (h.listen("0.0.0.0",this->port)) {
+    printf("Server listening on port: %d\n", this->port);
+    // add async to server hub to correctly handle asynchronous sending...
+    h.getDefaultGroup<uWS::SERVER>().addAsync();
+    h.run();
+}
+```
 
 ### March 31 2020
 
@@ -62,23 +53,29 @@ while (::connect(fd, result->ai_addr, result->ai_addrlen) < 0){
         }
 ```
 
-### Older
+# Installing uWebSockets
 
-uWebSockets seems to work really well. In combination with js-side WS client or local C++ client JSON
-string messages and binary data can be easily passed.
+To install uWebsockets on system use the following..
 
-Was able to send JPEG binary data and PNG binary data and receive on JS application side as binary, and
-then decode using `URL.createObjectURL(event.data)`, **HOWEVER** in **CHROME** there is a limit
-on `ws` frame size, thus, if `uWS` sends a frame 350kB (somewhere between 300-350kB), chrome cannot handle
-it; however Safari was tested to work. `Safari` was able to handle an 8mB image with `uWS`.
+## Linux install:
 
-Also used `npx create-react-app` to see if a rudimentary react app could be made with ws implementation - 
-seems to work!
+```bash
+git clone https://github.com/uNetworking/uWebSockets.git
+cd uWebSockets
+git checkout v0.14
+make -j 8
+sudo make install
+```
 
-**TODO**: figure out how to configure `ws` on chrome client-side to correctly handle large messages.
 
-It seems as thought its possible to push up ws to send more data correctly by sending larger and larger sized 
-objects
+## Mac Install:
 
-How to make ws client reconnect automatically?
+```bash
+brew install openssl zlib libuv
+git clone https://github.com/uNetworking/uWebSockets.git
+cd uWebSockets
+git checkout v0.14
+make -j 8
+sudo make install
+```
 
