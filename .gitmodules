@@ -1,3 +1,6 @@
 [submodule "uWebSockets/msgpack-c"]
 	path = uWebSockets/msgpack-c
 	url = https://github.com/msgpack/msgpack-c.git
+[submodule "uWebSockets/uWebSockets"]
+	path = uWebSockets/uWebSockets
+	url = https://github.com/evgenyslab/uWebSockets.git
