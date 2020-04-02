@@ -30,6 +30,8 @@ private:
     int port = 0;
     //
     bool connected = false;
+    // client
+    uWS::WebSocket<uWS::CLIENT>* client;
 
     // functions:
     // helper function
@@ -49,6 +51,7 @@ private:
            // seems like theres a new pointer per connected client; need to manage this better.
             printf("%s\n",req.headers->value);
            this->connected = true;
+           this->client = ws;
            }
         );
 
@@ -102,15 +105,34 @@ public:
     void stop(){
         pthread_kill(this->_tid, 0);
     };
+
     // send message
-    void send(const std::string rmsg){
-        // lock queue
-        pthread_mutex_lock(&this->_txmutex);
-        // check size of queue
-        if(this->txqueue.size()==MAX_MESSAGE_QUEUE)
-            this->txqueue.pop_front(); // remove first msg
-        this->txqueue.emplace_back(rmsg);
-        pthread_mutex_unlock(&this->_txmutex);
+    void _send(char * cmsg, size_t l, bool BINARY = true){
+        std::string msg(cmsg,l);
+        if (BINARY){
+            this->client->send(msg.c_str(),msg.size(),OpCode::BINARY);
+        }else{
+            this->client->send(msg.c_str(),msg.size(),OpCode::TEXT);
+        }
+    }
+
+    // blocking reads message from queue
+    void read_blocking(std::string &ret){
+        bool received = false;
+        while(!received){
+            // lock queue
+            pthread_mutex_lock(&this->_rxmutex);
+            if(!this->rxqueue.empty()){
+                ret = this->rxqueue.front();
+                this->rxqueue.pop_front();
+                received = true;
+            }
+            pthread_mutex_unlock(&this->_rxmutex);
+            if(!received)
+                std::this_thread::sleep_for(std::chrono::milliseconds(2));
+        }
+
+
     };
     // reads message from queue
     void read(std::string &ret){
@@ -134,5 +156,4 @@ public:
         }
         pthread_mutex_unlock(&this->_rxmutex);
     };
-
 };

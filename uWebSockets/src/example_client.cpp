@@ -34,13 +34,10 @@ int main(){
     while(!exit) {
         // read from client
         std::string msg;
-        client.read(msg);
-        if (!msg.empty()){
-            printf("Message received on server, size: %ld bytes\n", msg.size());
-            if (msg.size()<60)
-                printf("Content: %s\n", msg.c_str());
-        }
-        std::this_thread::sleep_for(std::chrono::milliseconds(30));
+        client.read_blocking(msg);
+        printf("Message received on server, size: %ld bytes\n", msg.size());
+        if (msg.size()<60)
+            printf("Content: %s\n", msg.c_str());
     }
 
     return 0;
