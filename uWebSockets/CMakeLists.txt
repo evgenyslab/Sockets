@@ -26,8 +26,6 @@ file(GLOB UWS
         "uWebSockets/src/*.c*"
         )
 
-add_executable(hub_test src/test.cpp ${UWS})
-target_link_libraries(hub_test crypto z uv ssl pthread)
 
 add_executable(example_server src/example_server.cpp ${UWS} include/uWServer_b.h)
 target_link_libraries(example_server crypto z uv ssl pthread)
