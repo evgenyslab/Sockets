@@ -8,17 +8,22 @@ import { decode } from "@msgpack/msgpack";
 const ws = new WebSocket("ws://127.0.0.1:13049");
 ws.binaryType = "blob";
 var buffer;
+var connected = false;
 
 class App extends Component {
 
     state = {
-        test_img: null
     };
+
+
 
     // need to use this.. why? something about loading this when page loads.
     UNSAFE_componentWillMount() {
+        document.addEventListener('keydown', this.logKey);
+
         ws.onopen = () => {
             console.log("Connected");
+            connected = true;
             // connected = true;
             document.getElementById("connection_info").innerHTML = "Connected!";
         };
@@ -55,8 +60,14 @@ class App extends Component {
             reader.readAsArrayBuffer(event.data);
 
         };
-    }
+    };
 
+    // local key logger that is attached to whole window; can be focused to specific iframe..
+    // I think this can be src'ed into an iFrame from a different source...
+    // this will repeat on hold since 'keydown' code is used
+    logKey = (e) =>{
+        console.log(` ${e.code}`);
+    };
 
     updateImage = (data) =>{
         console.log(typeof(data));
@@ -67,12 +78,25 @@ class App extends Component {
         document.querySelector("#image").width = 200;
     };
 
+     myFunction = () => {
+        console.log("button clicked");
+        if (connected){
+            ws.send("the button was clicked");
+        }
+    };
+
+
+
     render(){
         return(
         <div className="App">
             <header className="App-header">
                 <img src={logo} className="App-logo" alt="logo" />
                 <div id="connection_info">Not Connected.</div>
+                <div id="button_panel">
+                    <input id="myInput" value="Type your input here.."></input>
+                    <button type="button" id="myBtn" onClick={this.myFunction}>Try it</button>
+                </div>
                 <div id="message"></div>
                 <img id="image" alt=""/>
             </header>
