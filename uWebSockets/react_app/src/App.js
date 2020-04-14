@@ -3,12 +3,8 @@ import logo from './logo.svg';
 import './App.css';
 import { decode } from "@msgpack/msgpack";
 
-
-
-
-var buffer;
+// variable for the inevitable websocket:
 let ws = null;
-
 
 class App extends Component {
 
@@ -88,9 +84,9 @@ class App extends Component {
             var reader = new FileReader();
             // arrow function to retain 'this' & handle byte array conversion + pass to decoder:
             reader.onload = (e) =>{
-                buffer = new Uint8Array(e.target.result);  // arraybuffer object
+                // buffer = new Uint8Array(e.target.result);  // <-- OLD!
                 // binary decoding works! just need to pack correctly...
-                var decoded = decode(buffer);
+                var decoded = decode(new Uint8Array(e.target.result));
                 //  send image to its own function:
                 if ("image_binary" in decoded){
                     // parse & update image...
@@ -169,7 +165,6 @@ class App extends Component {
                 <div id="main_window" tabIndex="0">
                     <img src={logo} className="App-logo" alt="logo" />
                     <div id="connection_info">Not Connected.</div>
-
                 </div>
                 <div id="buttons">
                     <input id="URLInput" type="text" value={this.state.url} onChange={this.updateURL}></input>
