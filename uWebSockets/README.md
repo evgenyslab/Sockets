@@ -6,9 +6,9 @@ This repo has a git submodule with uWebsockets that is compiled together with te
 
 ## TODO List
 
-- [ ] s++ client auto reconnect
 - [ ] cython/python wrapping server + client headers
-- [ ] App.js ws socket select url
+- [x] App.js ws socket select url & connect
+- [x] s++ client auto reconnect
 - [x] loopback speedtest from server to webclient back to server @ different package sizes
 
 ## Testing Notes
