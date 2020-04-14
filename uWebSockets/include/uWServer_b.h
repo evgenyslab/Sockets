@@ -23,9 +23,6 @@ private:
     // received queue
     std::deque<std::string> rxqueue;
     pthread_mutex_t _rxmutex = PTHREAD_MUTEX_INITIALIZER;
-    // send queue
-    std::deque<std::string> txqueue;
-    pthread_mutex_t _txmutex = PTHREAD_MUTEX_INITIALIZER;
     // client lock:
     pthread_mutex_t _lock = PTHREAD_MUTEX_INITIALIZER;
     // connection list:
