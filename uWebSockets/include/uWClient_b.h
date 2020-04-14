@@ -19,7 +19,7 @@ using namespace uWS;
 class uWClient_b{
 private:
     // run thread
-    pthread_t _tid;
+    pthread_t _tid, _tih;
     // received queue
     std::deque<std::string> rxqueue;
     pthread_mutex_t _rxmutex = PTHREAD_MUTEX_INITIALIZER;
@@ -30,6 +30,7 @@ private:
     int port = 0;
     //
     bool connected = false;
+    bool exit = false;
     // client
     uWS::WebSocket<uWS::CLIENT>* client;
 
@@ -37,6 +38,12 @@ private:
     // helper function
     static void *__run__(void *context) {
         ((uWClient_b *) context)->_run();
+        return nullptr;
+    }
+
+    // hall monitor function
+    static void *__monitor__(void *context) {
+        ((uWClient_b *) context)->_hallMonitor();
         return nullptr;
     }
     // run function:
@@ -62,32 +69,33 @@ private:
 
 
         h.onMessage([this](uWS::WebSocket<uWS::CLIENT>* ws, char *message, size_t length, uWS::OpCode opCode){
-            // could push message into local context work queue.
-            std::string rmsg(message, length);
             // lock queue
             pthread_mutex_lock(&this->_rxmutex);
             // place message:
-            this->rxqueue.emplace_back(rmsg);
+            this->rxqueue.emplace_back(std::string(message,length));
             // unlock queue
             pthread_mutex_unlock(&this->_rxmutex);
         });
 
-        // this
-        printf("Starting Client\nConnection status: %d\n", this->connected);
         // try to connect, I suspect might need to wrap this on the whole thread...
-        // TODO: to get this to reconnect to new server need work. see readme
         h.connect("ws://127.0.0.1:" + std::to_string(this->port), (void *) 1);
-//        bool exit = false;
-//        while(!exit){
-//            // check if connected:
-//            if (!this->connected){
-//
-//            }
-//            h.poll();
-//            std::this_thread::sleep_for(std::chrono::milliseconds(20));
-//        }
         h.run(); // <- blocking call
 
+    }
+
+    void _hallMonitor(){
+        /*
+         * this is a hallway monitor...
+         * it periodically checks if the client has been connected or is not connected
+         * for a period of time. If not, then it kills the hub thread & restarts is.
+         * */
+        while(!this->exit){
+            std::this_thread::sleep_for(std::chrono::seconds(5));
+            if (!this->connected){
+                this->stop();
+                pthread_create(&this->_tid, nullptr, this->__run__, this);
+            }
+        }
     }
 
 public:
@@ -101,6 +109,8 @@ public:
     // creates and runs a thread with a hub based on config
     void run(){
         pthread_create(&this->_tid, nullptr, this->__run__, this);
+        // add run monitor...
+        pthread_create(&this->_tih, nullptr, this->__monitor__, this);
     };
     void stop(){
         pthread_kill(this->_tid, 0);
