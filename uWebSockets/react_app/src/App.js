@@ -5,32 +5,81 @@ import { decode } from "@msgpack/msgpack";
 
 
 
-const ws = new WebSocket("ws://127.0.0.1:13049");
-ws.binaryType = "blob";
+
 var buffer;
-var connected = false;
+let ws = null;
+
 
 class App extends Component {
 
     state = {
+        url: "127.0.0.1:13049",
+        message: "",
+        connected: false,
     };
 
 
 
-    // need to use this.. why? something about loading this when page loads.
     UNSAFE_componentWillMount() {
-        document.addEventListener('keydown', this.logKey);
+        // maybe use state props for this..
+        console.log(this.state.url);
+    }
+    // Attach functions to loaded components:
+    componentDidMount() {
+        // Attach function to main window div to capture keydown events:
+        document.getElementById("main_window").addEventListener('keydown', this.logKey);
 
-        ws.onopen = () => {
-            console.log("Connected");
-            connected = true;
-            // connected = true;
+        // attach function to input object on "enter" key to send message
+        document.getElementById("myInput").addEventListener("keyup", function(event) {
+                // Number 13 is the "Enter" key on the keyboard
+                if (event.keyCode === 13) {
+                    // Cancel the default action, if needed
+                    event.preventDefault();
+                    // Trigger the button element with a click
+                    document.getElementById("mySendBtn").click();
+                }
+            });
+        // attach function to input object on "enter" key to send message
+        document.getElementById("URLInput").addEventListener("keyup", function(event) {
+            // Number 13 is the "Enter" key on the keyboard
+            if (event.keyCode === 13) {
+                // Cancel the default action, if needed
+                event.preventDefault();
+                // Trigger the button element with a click
+                document.getElementById("myConnectBtn").click();
+            }
+        });
+    };
+
+    updateConnectionState = () => {
+        console.log("attempting to change connection status:");
+        if (this.state.connected){
+            console.log("connected");
             document.getElementById("connection_info").innerHTML = "Connected!";
+        }else{
+            console.log("not connected");
+            document.getElementById("connection_info").innerHTML = "Not Connected";
+        }
+    };
+
+    loadWS = () =>{
+        console.log("attempting to load ws...");
+        ws = new WebSocket("ws://"+this.state.url);
+        ws.binaryType = "blob";
+        document.getElementById("connection_info").innerHTML = "Attempting connection!";
+        ws.onopen = () => {
+            console.log("blah");
+            this.setState({
+                connected:true,
+            });
+            this.updateConnectionState();
         };
 
         ws.onclose = () => {
-            // connected = false;
-            document.getElementById("connection_info").innerHTML = "Not Connected";
+            this.setState({
+                connected:false,
+            });
+            this.updateConnectionState();
         };
 
         ws.onmessage =  (event) => {
@@ -62,6 +111,10 @@ class App extends Component {
         };
     };
 
+    unloadWS = () =>{
+      ws.close();
+    };
+
     // local key logger that is attached to whole window; can be focused to specific iframe..
     // I think this can be src'ed into an iFrame from a different source...
     // this will repeat on hold since 'keydown' code is used
@@ -78,12 +131,34 @@ class App extends Component {
         document.querySelector("#image").width = 200;
     };
 
-     myFunction = () => {
-        console.log("button clicked");
-        if (connected){
-            ws.send("the button was clicked");
-        }
-    };
+
+     wsSend = () => {
+       if (this.state.connected && this.state.message !== ""){
+           console.log("attempting to send message: " + this.state.message);
+           ws.send(this.state.message);
+       }else{
+           if (!this.state.connected)
+               console.log("Can't send message, not connected");
+           if (this.state.message === "")
+               console.log("Message is undefined");
+       }
+     };
+
+     updateMessage = (event) =>{
+         // console.log(event.target.value);
+         // this.message = event.target.value;
+         this.setState({
+             message: event.target.value
+         })
+     };
+
+     updateURL = (event) =>{
+         // can only dynamically update state of react component
+         this.setState({
+             url: event.target.value
+         })
+     };
+
 
 
 
@@ -91,12 +166,21 @@ class App extends Component {
         return(
         <div className="App">
             <header className="App-header">
-                <img src={logo} className="App-logo" alt="logo" />
-                <div id="connection_info">Not Connected.</div>
-                <div id="button_panel">
-                    <input id="myInput" value="Type your input here.."></input>
-                    <button type="button" id="myBtn" onClick={this.myFunction}>Try it</button>
+                <div id="main_window" tabIndex="0">
+                    <img src={logo} className="App-logo" alt="logo" />
+                    <div id="connection_info">Not Connected.</div>
+
                 </div>
+                <div id="buttons">
+                    <input id="URLInput" type="text" value={this.state.url} onChange={this.updateURL}></input>
+                    <button type="button" id="myConnectBtn" onClick={this.loadWS}>Connect</button>
+                    <button type="button" id="myDisconnectBtn" onClick={this.unloadWS}>Disconnect</button>
+                </div>
+                <div id="input_window" tabIndex="0">
+                    <input id="myInput" text="" value={this.state.message} onChange={this.updateMessage}></input>
+                    <button type="button" id="mySendBtn" onClick={this.wsSend}>Send</button>
+                </div>
+
                 <div id="message"></div>
                 <img id="image" alt=""/>
             </header>
