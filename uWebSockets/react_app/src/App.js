@@ -12,6 +12,7 @@ class App extends Component {
         url: "127.0.0.1:13049",
         message: "",
         connected: false,
+        disp_width: 200,
     };
 
 
@@ -124,7 +125,7 @@ class App extends Component {
         var blob = new Blob ([data]);
         console.log(blob);
         document.querySelector("#image").src = URL.createObjectURL(blob);
-        document.querySelector("#image").width = 200;
+        document.querySelector("#image").width = this.state.disp_width;
     };
 
 
@@ -155,6 +156,12 @@ class App extends Component {
          })
      };
 
+     updateWidth = (event) => {
+         this.setState({
+             disp_width: event.target.value
+         });
+         document.querySelector("#image").width = this.state.disp_width;
+     };
 
 
 
@@ -174,6 +181,9 @@ class App extends Component {
                 <div id="input_window" tabIndex="0">
                     <input id="myInput" text="" value={this.state.message} onChange={this.updateMessage}></input>
                     <button type="button" id="mySendBtn" onClick={this.wsSend}>Send</button>
+                </div>
+                <div id="im_settings" tabIndex="0">
+                    <input id="im_width" text="" value={this.state.disp_width} onChange={this.updateWidth}></input>
                 </div>
 
                 <div id="message"></div>

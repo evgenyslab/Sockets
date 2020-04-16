@@ -7,6 +7,7 @@ This repo has a git submodule with uWebsockets that is compiled together with te
 ## TODO List
 
 - [ ] cython/python wrapping server + client headers
+- [x] test webcam stream to browser (new app, using c++ lib + react app)
 - [x] App.js ws socket select url & connect
 - [x] s++ client auto reconnect
 - [x] loopback speedtest from server to webclient back to server @ different package sizes

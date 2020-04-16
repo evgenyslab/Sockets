@@ -8,9 +8,11 @@ include_directories(
         /usr/local/include
         msgpack-c/include
         uWebSockets/src
+        /usr/local/Cellar/opencv/4.2.0_1/include/opencv4
 )
 
 link_directories(/usr/local/lib)
+link_directories(/usr/local/Cellar/opencv/4.2.0_1/lib)
 
 # macOS only:
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -20,12 +22,20 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
 endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
-add_subdirectory(msgpack-c)
 
 file(GLOB UWS
         "uWebSockets/src/*.c*"
         )
 
+file(GLOB OPENCV_LIBS
+        "/usr/local/Cellar/opencv/4.2.0_1/lib/*.dylib"
+        )
+
+add_library(uwserver STATIC ${UWS} include/uWServer_b.h)
+
+add_executable(video_send src/video_send.cpp ${UWS} include/uWServer_b.h)
+target_link_libraries(video_send crypto z uv ssl pthread ${OPENCV_LIBS}
+        )
 
 add_executable(example_server src/example_server.cpp ${UWS} include/uWServer_b.h)
 target_link_libraries(example_server crypto z uv ssl pthread)
