@@ -1,6 +1,9 @@
 #include "common_header.h"
+#include "socketInterface.h"
 
 #define MAX_QUEUE_SIZE 10
+
+using namespace SocketInterface;
 
 template<class T>
 struct recvConfig{
@@ -11,7 +14,7 @@ struct recvConfig{
     recvConfig(int _sock, T * _q):sock(_sock),q(_q){};
 };
 
-class Client{
+class Client: public Socket{
 private:
 
     bool connected = false;
@@ -56,7 +59,8 @@ private:
         long bytes_to_read = 0;
 
         std::vector<char> vmsg;
-
+        // this call will hold the while loop until a disconnection occurs. Could it be changed to work
+        // in a sequential loop?
         while((len = recv(their_sock,msg, BYTES_TO_READ,0)) > 0) {
             // push msg into char vector
             vmsg.insert(vmsg.end(), msg, msg+len);
@@ -126,7 +130,7 @@ private:
 
         // create connection to server
         inet_ntop(AF_INET, (struct sockaddr *)&server_sock, ip, INET_ADDRSTRLEN);
-        printf("connected to %s, start chatting\n",ip);
+        printf("connected to %s, start_t chatting\n",ip);
     };
 
     void Operator(){
@@ -159,7 +163,7 @@ public:
 
     ~Client(){
         // todo: disconnect any open socket...
-        stop();
+        stop_t();
         std::cout << "Client cleaned and closed\n";
     };
 
@@ -173,8 +177,8 @@ public:
         server_sock.sin_addr.s_addr = inet_addr("127.0.0.1");
     }
 
-    void send(const std::string &msg){
-        // send a message by packing the message length into 4bytes then msg:
+    void send_t(const std::string &msg){
+        // send_t a message by packing the message length into 4bytes then msg:
         unsigned int s = static_cast<unsigned int> (msg.size()) ;
         // write 8 byte message length:
         auto bytes_to_decode = vencode(s);
@@ -187,15 +191,34 @@ public:
             }
     }
 
-    void start(){
+    void start_t(){
         // create op thread...
         pthread_create(&thread_operator,NULL,_op,this);
     }
 
-    void stop(){
+    void stop_t(){
         pthread_kill(thread_operator, 0);
         close(sock);
     }
+
+    void start(){};
+    void stop(){};
+    void send(char* messageByteArray, int l){};
+    void send(const std::string& messageByteArray){};
+
+    std::string readBlocking(){
+        std::string readMessageByteArray;
+        while(this->mqueue.empty())
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+//        auto message = mqueue.pop_front();
+        return readMessageByteArray;
+    };
+
+    std::string readNonBlocking(){
+        std::string readMessageByteArray;
+
+        return readMessageByteArray;
+    };
 
 
 };
