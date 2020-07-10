@@ -11,7 +11,7 @@ struct recvConfig{
     recvConfig(int _sock, T * _q):sock(_sock),q(_q){};
 };
 
-class client{
+class Client{
 private:
 
     bool connected = false;
@@ -27,7 +27,7 @@ private:
     pthread_t thread_operator;
     struct sockaddr_in server_sock;
 
-    // Generic Write to client
+    // Generic Write to Client
     int _write( char *s, int len)
     {
         if (len < 1) { len = strlen(s); }
@@ -146,18 +146,18 @@ private:
 
     // helper method to create thread from instance...
     static void * _op (void * context){
-        ((client *)context)->Operator();
+        ((Client *)context)->Operator();
         return nullptr;
     }
 
 public:
 
-    client(int lport=7272, bool reconnect=false): port(lport), autoReConnect(reconnect){
+    Client(int lport=7272, bool reconnect=false): port(lport), autoReConnect(reconnect){
         randomString(ID, ID_LENGTH);
         _init();
     };
 
-    ~client(){
+    ~Client(){
         // todo: disconnect any open socket...
         pthread_join(thread_operator,NULL);
         close(sock);
@@ -165,7 +165,7 @@ public:
     };
 
     void _init(){
-        // set up client's socket:
+        // set up Client's socket:
         sock = socket(AF_INET,SOCK_STREAM,0);
         // set up connection to server's socket:
         memset(server_sock.sin_zero,'\0',sizeof(server_sock.sin_zero));

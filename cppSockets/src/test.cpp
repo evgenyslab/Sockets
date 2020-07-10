@@ -11,7 +11,7 @@ int main(int argc,char *argv[]) {
     s.start();
 
     // create client:
-    client c1(7272);
+    Client c1(7272);
     c1.start();
 
     // spam client

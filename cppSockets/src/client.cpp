@@ -7,7 +7,7 @@ int main(int argc,char *argv[]) {
 
 
     // create client:
-    client c1(7272, true);
+    Client c1(7272, true);
     c1.start();
 
     while(1){
