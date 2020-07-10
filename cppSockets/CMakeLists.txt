@@ -11,11 +11,21 @@ add_subdirectory(tests)
 #TOOO: create INTERFACE Library for header only lib:
 add_library(${PROJECT_NAME} INTERFACE)
 
-add_executable(test src/test.cpp include/server.h include/common_header.h include/client.h)
-target_link_libraries(test pthread)
+# get all source files:
+file(GLOB SOURCES include/*.h*)
 
-add_executable(client src/client.cpp include/server.h include/common_header.h include/client.h)
-target_link_libraries(client pthread)
+# get all application sources:
+file(GLOB EXAMPLES examples/*)
 
-add_executable(server src/server.cpp include/server.h include/common_header.h include/client.h)
-target_link_libraries(server pthread)
+
+# create executible for each example application
+foreach(example_application ${EXAMPLES})
+    # strip .cpp extension:
+    get_filename_component(example_application_base ${example_application} NAME)
+    string( REPLACE ".cpp" "" example_application_name ${example_application_base})
+
+
+    add_executable(${example_application_name} ${example_application} ${SOURCES})
+    target_link_libraries(${example_application_name} -pthread)
+
+endforeach(example_application ${EXAMPLES})
