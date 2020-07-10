@@ -206,8 +206,8 @@ public:
     }
 
     void stop(){
-        pthread_join(thread_listen, nullptr);
-        pthread_join(thread_manage, nullptr);
+        pthread_kill(thread_listen, 0);
+        pthread_kill(thread_manage, 0);
         this->release();
     }
 
