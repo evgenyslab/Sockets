@@ -159,8 +159,7 @@ public:
 
     ~Client(){
         // todo: disconnect any open socket...
-        pthread_join(thread_operator,NULL);
-        close(sock);
+        stop();
         std::cout << "Client cleaned and closed\n";
     };
 
@@ -193,7 +192,10 @@ public:
         pthread_create(&thread_operator,NULL,_op,this);
     }
 
-
+    void stop(){
+        pthread_kill(thread_operator, 0);
+        close(sock);
+    }
 
 
 };
