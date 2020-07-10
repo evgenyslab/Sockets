@@ -6,7 +6,7 @@
 
 int main(int argc,char *argv[]) {
 
-    server s(7272);
+    Server s(7272);
     s.open();
     s.start();
 

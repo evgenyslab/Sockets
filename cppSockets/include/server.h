@@ -7,20 +7,20 @@
  *
  * client.init(socket)
  *  -> create send thread that waits idly until called? (this doesnt make sense)
- *     if write is unresponsive, need to communicate back to server to remove this client...
- *  -> create recv thread that builds msg and puts into server's incoming msg queue (using locks)
+ *     if write is unresponsive, need to communicate back to Server to remove this client...
+ *  -> create recv thread that builds msg and puts into Server's incoming msg queue (using locks)
  *
  * clients.pushback(client) // how to remove later?
  * */
 
 struct _clientContext{
     int sock = -1;
-    std::deque<message> *_mref = nullptr; // <- ref to server's message queue
+    std::deque<message> *_mref = nullptr; // <- ref to Server's message queue
     pthread_mutex_t * _mutexQueue = nullptr;
     _clientContext(int _s, std::deque<message>* _q, pthread_mutex_t* _m): sock(_s), _mref(_q), _mutexQueue(_m){};
 };
 
-class server{
+class Server{
     SOCKET sock;
     fd_set master;
     int timeout;
@@ -70,7 +70,7 @@ class server{
     }
 
     static void * _client_reader(void *context){
-        // context needs to have access to server's message queue, message queue mutex,
+        // context needs to have access to Server's message queue, message queue mutex,
         // client socket
         // cast into something familiar:
         auto *ctx = (_clientContext*) context;
@@ -129,20 +129,20 @@ class server{
      * */
     static void* listen_Helper(void* context)
     {
-        ((server *)context)->Listener();
+        ((Server *)context)->Listener();
         return nullptr;
     }
 
     static void* client_manager(void* context)
     {
-        ((server *)context)->Manager();
+        ((Server *)context)->Manager();
         return nullptr;
     }
 
 
 public:
 
-    explicit server(int port = 0)
+    explicit Server(int port = 0)
             : sock(INVALID_SOCKET_m)
             , timeout(TIMEOUT_M)
             , port(port)
@@ -152,7 +152,7 @@ public:
         FD_ZERO(&master);
     }
 
-    ~server()
+    ~Server()
     {
         release();
     }
@@ -198,7 +198,7 @@ public:
     }
 
     void start(){
-        std::cout << "Starting server at: " << port << "\n";
+        std::cout << "Starting Server at: " << port << "\n";
         pthread_mutex_lock(&mutex_writer);
         // createa a thread that listens for incoming connections:
         pthread_create(&thread_listen, nullptr, this->listen_Helper, this);
