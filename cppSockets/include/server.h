@@ -211,6 +211,10 @@ public:
         this->release();
     }
 
+    bool hasClients(){
+        return clients.size()>0;
+    }
+
     void write(const std::string &msg){
         // This needs to write 2 messages:
         // 8 byte message of length == n
