@@ -7,10 +7,21 @@
  * */
 namespace SocketInterface{
 
+    struct __message{
+        long timeReceived = -1;
+        std::string originID;
+        std::string data;
+    };
+
     /*
      *
      * */
     class Socket{
+
+    private:
+        void* _receive(){
+
+        };
 
     public:
         ~Socket()=default;

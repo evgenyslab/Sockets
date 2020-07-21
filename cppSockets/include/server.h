@@ -74,7 +74,7 @@ class Server{
         // client socket
         // cast into something familiar:
         auto *ctx = (_clientContext*) context;
-
+        // TODO: this is common to both client & server, should be implemented at socketInterface level
         int their_sock = ctx->sock;
         char *msg = new char[BYTES_TO_READ];
         int len;
