@@ -1,19 +1,25 @@
+# CPP Sockets Generic Interfacing Class
+
+*Project is split from [here](https://github.com/evgenyslab/Sockets/tree/v0.0.0)*
+
+-------
+
 # install gtest on mac
 
 ```bash
 git clone https://github.com/google/googletest.git
-cd googletest 
+cd googletest
 git checkout release-1.10.0
-mkdir build 
-cd build 
+mkdir build
+cd build
 cmake ..
 make -j 8
-sudo make install 
+sudo make install
 
 echo "export CPLUS_INCLUDE_PATH=/usr/local/include" >> ~/.bash_profile
 echo "export LIBRARY_PATH=/usr/local/lib" >> ~/.bash_profile
- 
-source ~/.bash_profile 
+
+source ~/.bash_profile
 
 ```
 
